@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主観評価スライダー</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f7f7f7;
+            font-size: 16px;
+        }
+        .container {
+            width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        
+        /* スライダーとラベルを囲むコンテナ */
+        .slider-container {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            margin: 20px 0;
+        }
+        /* スライダー本体 */
+        .slider {
+            flex: 1; /* スライダーがコンテナの残り幅を埋める */
+            margin: 0 10px; /* 両端のラベルとの余白 */
+        }
+        /* スライダー両端のラベル */
+        .slider-label {
+            font-size: 16px;
+            color: #555;
+        }
+
+        .value-display {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        .button-container {
+            text-align: center;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            background-color: #46a15f;
+            color: white;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #ccc;
+        }
+        button:hover {
+            background-color: #005fa3;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>主観評価スライダー</h1>
+
+        <div class="value-display">
+            評価: <span id="slider-value">50</span>
+        </div>
+        
+        <div class="slider-container">
+            <span class="slider-label">不快</span>
+            <input type="range" id="slider" class="slider" min="0" max="100" value="50">
+            <span class="slider-label">快</span>
+        </div>
+        
+        <div class="value-display" id="time-display">
+            測定時間: 0分 0秒
+        </div>
+
+        <div class="button-container">
+            <button id="start-button" onclick="startMeasurement()">スタート</button>
+            <button id="stop-button" onclick="stopMeasurement()" disabled>ストップ</button>
+            <button id="save-button" onclick="saveData()" disabled>保存</button>
+        </div>
+    </div>
+
+    <script>
+        let startTime;
+        let isMeasuring = false;
+        let measurementInterval;
+        let savedData = [];
+
+        // 測定開始
+        function startMeasurement() {
+            savedData = []; // 測定開始時にデータをリセット
+            const startValue = document.getElementById('slider').value;
+            startTime = Date.now();
+            isMeasuring = true;
+            document.getElementById('start-button').disabled = true;
+            document.getElementById('stop-button').disabled = false;
+            document.getElementById('save-button').disabled = false;
+            document.getElementById('slider').disabled = false;
+            
+            document.getElementById('time-display').innerText = '測定時間: 0分 0秒'; // 測定時間表示をリセット
+
+            // スタート時点のデータを記録 (経過時間を秒単位で記録)
+            const currentTime = new Date().toLocaleString();
+            const data = {
+                time: currentTime,
+                value: startValue,
+                elapsed_time_sec: 0 // 経過時間(秒)
+            };
+            savedData.push(data);
+            
+            measurementInterval = setInterval(updateTime, 1000); // 1秒ごとに時間を更新
+        }
+
+        // 測定停止
+        function stopMeasurement() {
+            isMeasuring = false;
+            clearInterval(measurementInterval);
+            document.getElementById('start-button').disabled = false;
+            document.getElementById('stop-button').disabled = true;
+            document.getElementById('save-button').disabled = false;
+            document.getElementById('slider').disabled = true;
+        }
+
+        // 時間を更新する (画面表示用)
+        function updateTime() {
+            if (isMeasuring) {
+                const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+                const minutes = Math.floor(elapsedTime / 60);
+                const seconds = elapsedTime % 60;
+                // 画面表示は「分秒」のまま
+                document.getElementById('time-display').innerText = `測定時間: ${minutes}分 ${seconds}秒`;
+            }
+        }
+
+        // スライダーの値を表示し，データを記録する
+        document.getElementById('slider').addEventListener('input', function() {
+            const sliderValue = document.getElementById('slider').value;
+            document.getElementById('slider-value').innerText = sliderValue;
+
+            // 測定中のみデータを記録
+            if (isMeasuring) {
+                const currentTime = new Date().toLocaleString();
+                // 経過時間を秒単位(数値)で計算
+                const elapsedTimeInSeconds = Math.floor((Date.now() - startTime) / 1000);
+                
+                const data = {
+                    time: currentTime,
+                    value: sliderValue,
+                    elapsed_time_sec: elapsedTimeInSeconds // 秒単位で記録
+                };
+                savedData.push(data);
+            }
+        });
+
+        // 測定データをCSVに保存
+        function saveData() {
+            if (savedData.length === 0) {
+                alert("記録されたデータがありません．スタートボタンを押して測定を開始してください．");
+                return;
+            }
+            
+            // CSV形式で保存 (ヘッダーを秒単位に変更)
+            let csvContent = "Time,Evaluation,Elapsed Time (sec)\n"; // ヘッダー変更
+            savedData.forEach(item => {
+                // timeは文字列なので "" で囲み，経過時間は秒(数値)をそのまま出力
+                csvContent += `"${item.time}",${item.value},${item.elapsed_time_sec}\n`; // 記録データを変更
+            });
+
+            // ダウンロードリンク作成 (BOMを追加してExcelでの文字化けを防ぐ)
+            const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+            const blob = new Blob([bom, csvContent], { type: "text/csv;charset=utf-8;" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "subjective_evaluation.csv";
+            link.click();
+        }
+    </script>
+
+</body>
+</html>

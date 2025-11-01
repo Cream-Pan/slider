@@ -28,13 +28,10 @@
             display: flex;
             align-items: center;
             width: 100%;
-            margin: 20px 0;
+            /* 上下のマージンを調整 */
+            margin: 40px 0;
         }
-        /* スライダー本体 */
-        .slider {
-            flex: 1; /* スライダーがコンテナの残り幅を埋める */
-            margin: 0 10px; /* 両端のラベルとの余白 */
-        }
+
         /* スライダー両端のラベル */
         .slider-label {
             font-size: 16px;
@@ -65,6 +62,96 @@
         button:hover {
             background-color: #005fa3;
         }
+
+        /* --- スライダーのスタイル修正 --- */
+
+        /* スライダー全体のスタイルリセット */
+        input[type=range].slider {
+            -webkit-appearance: none; /* Chrome, Safari, Opera */
+            appearance: none;
+            flex: 1; /* コンテナの残り幅を埋める */
+            margin: 0 10px;
+            background: transparent; /* トラックの背景は別途設定 */
+            cursor: pointer;
+        }
+        
+        /* フォーカス時のアウトラインを消す */
+        input[type=range].slider:focus {
+            outline: none;
+        }
+
+        /* トラック（溝）のスタイル - WebKit (Chrome, Safari) */
+        input[type=range].slider::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #ddd; /* トラック全体の色を薄いグレーに統一 */
+            border-radius: 2px;
+        }
+
+        /* つまみ（点）のスタイル - WebKit (Chrome, Safari) */
+        input[type=range].slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%; /* 円形（点）にする */
+            background: #555; /* つまみの色を濃いグレーに */
+            cursor: pointer;
+            margin-top: -6px; /* トラックの中央に来るように調整 ( (16px - 4px) / 2 ) */
+        }
+
+        /* トラック（溝）のスタイル - Firefox */
+        input[type=range].slider::-moz-range-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #ddd; /* トラック全体の色を薄いグレーに統一 */
+            border-radius: 2px;
+        }
+
+        /* つまみ（点）のスタイル - Firefox */
+        input[type=range].slider::-moz-range-thumb {
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #555;
+            cursor: pointer;
+            border: none; /* Firefoxはデフォルトで枠線が付くことがある */
+        }
+        
+        /* トラック（溝）のスタイル - IE / Edge */
+        input[type=range].slider::-ms-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: transparent; 
+            border-color: transparent;
+            color: transparent;
+        }
+        
+        /* IE/Edgeで青くなる部分（左側）をトラックと同じ色にする */
+        input[type=range].slider::-ms-fill-lower {
+            background: #ddd;
+            border-radius: 2px;
+        }
+
+        /* IE/Edgeのトラック右側 */
+        input[type=range].slider::-ms-fill-upper {
+            background: #ddd;
+            border-radius: 2px;
+        }
+
+        /* つまみ（点）のスタイル - IE / Edge */
+        input[type=range].slider::-ms-thumb {
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #555;
+            cursor: pointer;
+            margin-top: 0px; 
+        }
+
     </style>
 </head>
 <body>
@@ -72,10 +159,6 @@
     <div class="container">
         <h1>主観評価スライダー</h1>
 
-        <div class="value-display">
-            評価: <span id="slider-value">50</span>
-        </div>
-        
         <div class="slider-container">
             <span class="slider-label">不快</span>
             <input type="range" id="slider" class="slider" min="0" max="100" value="50">
@@ -148,7 +231,8 @@
         // スライダーの値を表示し，データを記録する
         document.getElementById('slider').addEventListener('input', function() {
             const sliderValue = document.getElementById('slider').value;
-            document.getElementById('slider-value').innerText = sliderValue;
+            // ★削除: スライダーの値をテキスト表示する処理を削除
+            // document.getElementById('slider-value').innerText = sliderValue;
 
             // 測定中のみデータを記録
             if (isMeasuring) {

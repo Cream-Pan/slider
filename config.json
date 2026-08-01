@@ -1,0 +1,44 @@
+{
+  "appName": "温熱環境主観評価",
+  "checkpointSequence": [
+    {
+      "label": "実験開始",
+      "segmentId": "START",
+      "nextSegment": "P1"
+    },
+    {
+      "label": "P1終了",
+      "segmentId": "P1_END",
+      "nextSegment": "P2"
+    },
+    {
+      "label": "P2終了",
+      "segmentId": "P2_END",
+      "nextSegment": "P3"
+    },
+    {
+      "label": "P3終了",
+      "segmentId": "P3_END",
+      "nextSegment": "RETURN"
+    },
+    {
+      "label": "ルート終了",
+      "segmentId": "ROUTE_END",
+      "nextSegment": "RECOVERY"
+    },
+    {
+      "label": "回復終了",
+      "segmentId": "RECOVERY_END",
+      "nextSegment": "COMPLETE"
+    }
+  ],
+  "gpsOptions": {
+    "enableHighAccuracy": true,
+    "maximumAge": 1000,
+    "timeout": 15000
+  },
+  "gpsAccuracyThresholds": {
+    "good": 20,
+    "warning": 50
+  }
+}

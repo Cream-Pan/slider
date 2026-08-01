@@ -1,0 +1,12 @@
+{
+  "name": "温熱環境主観評価",
+  "short_name": "温熱評価",
+  "description": "屋外歩行実験用の主観評価・GPS記録WebApp",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f1f1e2",
+  "theme_color": "#46a15f",
+  "lang": "ja",
+  "orientation": "portrait"
+}

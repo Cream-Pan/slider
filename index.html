@@ -1,277 +1,178 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>主観評価スライダー</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background-color: #f7f7f7;
-            font-size: 16px;
-        }
-        .container {
-            width: 600px;
-            margin: 0 auto;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        h1 {
-            text-align: center;
-        }
-        
-        /* スライダーとラベルを囲むコンテナ */
-        .slider-container {
-            display: flex;
-            align-items: center;
-            width: 100%;
-            /* 上下のマージンを調整 */
-            margin: 40px 0;
-        }
-
-        /* スライダー両端のラベル */
-        .slider-label {
-            font-size: 16px;
-            color: #555;
-        }
-
-        .value-display {
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 24px;
-        }
-        .button-container {
-            text-align: center;
-        }
-        button {
-            padding: 10px 20px;
-            margin: 10px;
-            border: none;
-            background-color: #46a15f;
-            color: white;
-            font-size: 16px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button:disabled {
-            background-color: #ccc;
-        }
-        button:hover {
-            background-color: #005fa3;
-        }
-
-        /* --- スライダーのスタイル修正 --- */
-
-        /* スライダー全体のスタイルリセット */
-        input[type=range].slider {
-            -webkit-appearance: none; /* Chrome, Safari, Opera */
-            appearance: none;
-            flex: 1; /* コンテナの残り幅を埋める */
-            margin: 0 10px;
-            background: transparent; /* トラックの背景は別途設定 */
-            cursor: pointer;
-        }
-        
-        /* フォーカス時のアウトラインを消す */
-        input[type=range].slider:focus {
-            outline: none;
-        }
-
-        /* トラック（溝）のスタイル - WebKit (Chrome, Safari) */
-        input[type=range].slider::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 4px;
-            cursor: pointer;
-            background: #ddd; /* トラック全体の色を薄いグレーに統一 */
-            border-radius: 2px;
-        }
-
-        /* つまみ（点）のスタイル - WebKit (Chrome, Safari) */
-        input[type=range].slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            height: 16px;
-            width: 16px;
-            border-radius: 50%; /* 円形（点）にする */
-            background: #555; /* つまみの色を濃いグレーに */
-            cursor: pointer;
-            margin-top: -6px; /* トラックの中央に来るように調整 ( (16px - 4px) / 2 ) */
-        }
-
-        /* トラック（溝）のスタイル - Firefox */
-        input[type=range].slider::-moz-range-track {
-            width: 100%;
-            height: 4px;
-            cursor: pointer;
-            background: #ddd; /* トラック全体の色を薄いグレーに統一 */
-            border-radius: 2px;
-        }
-
-        /* つまみ（点）のスタイル - Firefox */
-        input[type=range].slider::-moz-range-thumb {
-            height: 16px;
-            width: 16px;
-            border-radius: 50%;
-            background: #555;
-            cursor: pointer;
-            border: none; /* Firefoxはデフォルトで枠線が付くことがある */
-        }
-        
-        /* トラック（溝）のスタイル - IE / Edge */
-        input[type=range].slider::-ms-track {
-            width: 100%;
-            height: 4px;
-            cursor: pointer;
-            background: transparent; 
-            border-color: transparent;
-            color: transparent;
-        }
-        
-        /* IE/Edgeで青くなる部分（左側）をトラックと同じ色にする */
-        input[type=range].slider::-ms-fill-lower {
-            background: #ddd;
-            border-radius: 2px;
-        }
-
-        /* IE/Edgeのトラック右側 */
-        input[type=range].slider::-ms-fill-upper {
-            background: #ddd;
-            border-radius: 2px;
-        }
-
-        /* つまみ（点）のスタイル - IE / Edge */
-        input[type=range].slider::-ms-thumb {
-            height: 16px;
-            width: 16px;
-            border-radius: 50%;
-            background: #555;
-            cursor: pointer;
-            margin-top: 0px; 
-        }
-
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#46a15f">
+  <meta name="description" content="屋外歩行実験用の主観評価・GPS記録WebApp">
+  <title>温熱環境主観評価</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
 </head>
 <body>
+  <main class="app-shell">
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">Outdoor Thermal Evaluation</p>
+        <h1>温熱環境主観評価</h1>
+      </div>
+      <span id="offlineBadge" class="status-badge neutral">準備中</span>
+    </header>
 
-    <div class="container">
-        <h1>主観評価スライダー</h1>
+    <div id="messageArea" class="message-area" aria-live="polite"></div>
 
-        <div class="slider-container">
-            <span class="slider-label">不快</span>
-            <input type="range" id="slider" class="slider" min="0" max="100" value="50">
-            <span class="slider-label">快</span>
+    <section id="startView" class="panel">
+      <h2 class="section-title">実験開始</h2>
+
+      <div class="form-group">
+        <label for="participantId">参加者ID</label>
+        <input
+          id="participantId"
+          class="text-input"
+          type="text"
+          inputmode="latin"
+          autocomplete="off"
+          maxlength="40"
+          placeholder="例：A_CW"
+        >
+        <p class="tiny-muted">
+          時計回り・逆回りは，A_CW，A_CCWのように参加者IDへ含めてください．
+        </p>
+      </div>
+
+      <div class="info-box">
+        <strong>開始前の確認</strong>
+        <p>このボタンでは測定を開始しません．実験開始時の定期地点評価を送信すると，時間計測とGPS記録を開始します．</p>
+      </div>
+
+      <button id="startExperimentBtn" class="primary-action" type="button">
+        実験を開始する
+      </button>
+    </section>
+
+    <section id="experimentView" class="hidden">
+      <section class="panel status-panel">
+        <div class="status-grid">
+          <div class="status-item">
+            <span class="status-label">参加者ID</span>
+            <span id="activeParticipantId" class="status-value">―</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">経過時間</span>
+            <span id="elapsedTime" class="status-value val">未開始</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">GPS</span>
+            <span id="gpsStatus" class="status-value">未取得</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">現在区間</span>
+            <span id="currentSegment" class="status-value">開始前</span>
+          </div>
         </div>
-        
-        <div class="value-display" id="time-display">
-            測定時間: 0分 0秒
+
+        <div class="record-counts tiny-muted">
+          主観評価：<span id="subjectiveCount" class="val">0</span> 件 ／
+          GPS：<span id="gpsCount" class="val">0</span> 件
         </div>
+      </section>
 
-        <div class="button-container">
-            <button id="start-button" onclick="startMeasurement()">スタート</button>
-            <button id="stop-button" onclick="stopMeasurement()" disabled>ストップ</button>
-            <button id="save-button" onclick="saveData()" disabled>保存</button>
+      <section class="panel">
+        <h2 class="section-title">評価</h2>
+        <p class="instruction">
+          評価時は安全な場所で停止し，回答完了後に歩行を再開してください．
+        </p>
+
+        <div class="action-grid">
+          <button id="changeEvaluationBtn" class="evaluation-button change-button" type="button" disabled>
+            <span class="button-kicker">感じ方が変わったとき</span>
+            <span class="button-main">変動による評価</span>
+          </button>
+
+          <button id="checkpointEvaluationBtn" class="evaluation-button checkpoint-button" type="button">
+            <span class="button-kicker">実験者の指示で回答</span>
+            <span id="checkpointButtonLabel" class="button-main">定期地点評価：実験開始</span>
+          </button>
         </div>
-    </div>
+      </section>
 
-    <script>
-        let startTime;
-        let isMeasuring = false;
-        let measurementInterval;
-        let savedData = [];
+    </section>
 
-        // 測定開始
-        function startMeasurement() {
-            savedData = []; // 測定開始時にデータをリセット
-            const startValue = document.getElementById('slider').value;
-            startTime = Date.now();
-            isMeasuring = true;
-            document.getElementById('start-button').disabled = true;
-            document.getElementById('stop-button').disabled = false;
-            document.getElementById('save-button').disabled = false;
-            document.getElementById('slider').disabled = false;
-            
-            document.getElementById('time-display').innerText = '測定時間: 0分 0秒'; // 測定時間表示をリセット
+    <section id="finishView" class="panel hidden">
+      <h2 class="section-title">実験終了</h2>
+      <p id="finishSummary">データを保存しました．</p>
 
-            // スタート時点のデータを記録 (経過時間を秒単位で記録)
-            const currentTime = new Date().toLocaleString();
-            const data = {
-                time: currentTime,
-                value: startValue,
-                elapsed_time_sec: 0 // 経過時間(秒)
-            };
-            savedData.push(data);
-            
-            measurementInterval = setInterval(updateTime, 1000); // 1秒ごとに時間を更新
-        }
+      <div class="finish-actions">
+        <button id="downloadAllBtn" type="button">CSVを保存する（2ファイル）</button>
+        <button id="newExperimentBtn" class="secondary-button" type="button">新しい実験を開始する</button>
+      </div>
+    </section>
+  </main>
 
-        // 測定停止
-        function stopMeasurement() {
-            isMeasuring = false;
-            clearInterval(measurementInterval);
-            document.getElementById('start-button').disabled = false;
-            document.getElementById('stop-button').disabled = true;
-            document.getElementById('save-button').disabled = false;
-            document.getElementById('slider').disabled = true;
-        }
+  <div id="evaluationModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="evaluationTitle">
+    <div class="modal-backdrop"></div>
+    <section class="modal-card">
+      <div class="modal-header">
+        <div>
+          <p id="evaluationTriggerLabel" class="eyebrow">評価</p>
+          <h2 id="evaluationTitle">現在の状態を回答してください</h2>
+        </div>
+        <button id="closeEvaluationBtn" class="icon-button" type="button" aria-label="評価を閉じる">×</button>
+      </div>
 
-        // 時間を更新する (画面表示用)
-        function updateTime() {
-            if (isMeasuring) {
-                const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
-                const minutes = Math.floor(elapsedTime / 60);
-                const seconds = elapsedTime % 60;
-                // 画面表示は「分秒」のまま
-                document.getElementById('time-display').innerText = `測定時間: ${minutes}分 ${seconds}秒`;
-            }
-        }
+      <div class="evaluation-form">
+        <section class="question-block">
+          <div class="question-header">
+            <h3>1．温冷感</h3>
+            <output id="sensationOutput" class="answer-output">未選択</output>
+          </div>
+          <p class="question-text">現在，体全体としてどの程度寒い，または暑いと感じますか．</p>
+          <div class="slider-wrap">
+            <span class="slider-end">寒い</span>
+            <input id="sensationSlider" class="discrete-slider untouched" type="range" min="-3" max="3" step="1" value="0">
+            <span class="slider-end">暑い</span>
+          </div>
+          <div class="slider-ticks" aria-hidden="true">
+            <span>−3</span><span>−2</span><span>−1</span><span>0</span><span>＋1</span><span>＋2</span><span>＋3</span>
+          </div>
+        </section>
 
-        // スライダーの値を表示し，データを記録する
-        document.getElementById('slider').addEventListener('input', function() {
-            const sliderValue = document.getElementById('slider').value;
-            // ★削除: スライダーの値をテキスト表示する処理を削除
-            // document.getElementById('slider-value').innerText = sliderValue;
+        <section class="question-block">
+          <div class="question-header">
+            <h3>2．温熱的快・不快</h3>
+            <output id="comfortOutput" class="answer-output">未選択</output>
+          </div>
+          <p class="question-text">現在の温熱状態を，どの程度快い，または不快と感じますか．</p>
+          <div class="slider-wrap">
+            <span class="slider-end">非常に不快</span>
+            <input id="comfortSlider" class="discrete-slider untouched" type="range" min="-3" max="3" step="1" value="0">
+            <span class="slider-end">非常に快い</span>
+          </div>
+          <div class="slider-ticks" aria-hidden="true">
+            <span>−3</span><span>−2</span><span>−1</span><span>0</span><span>＋1</span><span>＋2</span><span>＋3</span>
+          </div>
+        </section>
 
-            // 測定中のみデータを記録
-            if (isMeasuring) {
-                const currentTime = new Date().toLocaleString();
-                // 経過時間を秒単位(数値)で計算
-                const elapsedTimeInSeconds = Math.floor((Date.now() - startTime) / 1000);
-                
-                const data = {
-                    time: currentTime,
-                    value: sliderValue,
-                    elapsed_time_sec: elapsedTimeInSeconds // 秒単位で記録
-                };
-                savedData.push(data);
-            }
-        });
+        <section class="question-block">
+          <div class="question-header">
+            <h3>3．温熱選好</h3>
+            <output id="preferenceOutput" class="answer-output">未選択</output>
+          </div>
+          <p class="question-text">現在の温熱環境を，どのように変えてほしいですか．</p>
+          <div id="preferenceButtons" class="preference-grid" role="group" aria-label="温熱選好">
+            <button type="button" class="preference-button" data-value="cooler">もっと涼しく</button>
+            <button type="button" class="preference-button" data-value="no_change">このままでよい</button>
+            <button type="button" class="preference-button" data-value="warmer">もっと暖かく</button>
+          </div>
+        </section>
+      </div>
 
-        // 測定データをCSVに保存
-        function saveData() {
-            if (savedData.length === 0) {
-                alert("記録されたデータがありません．スタートボタンを押して測定を開始してください．");
-                return;
-            }
-            
-            // CSV形式で保存 (ヘッダーを秒単位に変更)
-            let csvContent = "Time,Evaluation,Elapsed Time (sec)\n"; // ヘッダー変更
-            savedData.forEach(item => {
-                // timeは文字列なので "" で囲み，経過時間は秒(数値)をそのまま出力
-                csvContent += `"${item.time}",${item.value},${item.elapsed_time_sec}\n`; // 記録データを変更
-            });
-
-            // ダウンロードリンク作成 (BOMを追加してExcelでの文字化けを防ぐ)
-            const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
-            const blob = new Blob([bom, csvContent], { type: "text/csv;charset=utf-8;" });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "subjective_evaluation.csv";
-            link.click();
-        }
-    </script>
-
+      <div class="modal-actions">
+        <button id="cancelEvaluationBtn" class="secondary-button" type="button">キャンセル</button>
+        <button id="submitEvaluationBtn" type="button" disabled>完了して保存</button>
+      </div>
+    </section>
+  </div>
 </body>
 </html>

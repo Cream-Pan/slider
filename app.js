@@ -217,9 +217,10 @@ async function startExperiment() {
 
   showExperimentView();
   els.elapsedTime.textContent = '未開始';
-  els.gpsStatus.textContent = '開始待ち';
   await acquireWakeLock();
-  showMessage('準備が完了しました．「定期地点評価：実験開始」を回答し，送信した時点から測定を開始します．');
+  // 「実験を開始する」を押した時点からGPS記録を開始する
+  startGpsLogging();
+  showMessage(  'GPS記録を開始しました．「定期地点評価：実験開始」を回答し，送信した時点から測定時間を開始します．');
 }
 
 function showExperimentView() {
@@ -440,7 +441,6 @@ async function submitEvaluation() {
 
     if (measurementStarted) {
       startElapsedTimer();
-      startGpsLogging();
       showMessage('実験開始時の評価を保存しました．測定を開始します．');
     } else {
       showMessage('主観評価を保存しました．');
@@ -784,14 +784,13 @@ async function restoreActiveSessionIfNeeded() {
   state.gpsCount = gpsRecords.length;
 
   showExperimentView();
+  startGpsLogging();
   if (state.startedAt) {
     startElapsedTimer();
-    startGpsLogging();
     showMessage('未終了の測定を再開しました．');
   } else {
     els.elapsedTime.textContent = '未開始';
-    els.gpsStatus.textContent = '開始待ち';
-    showMessage('未終了の準備状態を再開しました．実験開始時の定期地点評価を送信すると測定を開始します．');
+    showMessage('GPS記録を再開しました．実験開始時の定期地点評価を送信すると測定時間を開始します．');
   }
   await acquireWakeLock();
 }

@@ -383,7 +383,7 @@ p {
 
 .answer-output {
   min-width: 7.5rem;
-  color: #307546;
+  color: #333;
   font-weight: 700;
   text-align: right;
 }
@@ -411,7 +411,7 @@ p {
 
 .discrete-slider {
   width: 100%;
-  accent-color: #46a15f;
+  accent-color: #666;
   cursor: pointer;
 }
 
@@ -437,21 +437,21 @@ p {
 .preference-button {
   min-height: 54px;
   padding: 0.65rem 0.5rem;
-  border: 2px solid #8ca494;
+  border: 2px solid #aaa;
   background: #fff;
   color: #333;
   font-size: 0.88rem;
 }
 
 .preference-button:hover:not(:disabled) {
-  border-color: #005fa3;
-  background: #f2f7fb;
+  border-color: #777;
+  background: #f3f3f3;
   color: #333;
 }
 
 .preference-button.selected {
-  border-color: #46a15f;
-  background: #46a15f;
+  border-color: #555;
+  background: #666;
   color: #fff;
 }
 

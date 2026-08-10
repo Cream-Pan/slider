@@ -12,18 +12,23 @@
       "nextSegment": "P2"
     },
     {
-      "label": "P2終了",
+      "label": "涼しい棟通過",
       "segmentId": "P2_END",
+      "nextSegment": "P3_START"
+    },
+    {
+      "label": "P3着",
+      "segmentId": "P3_START",
       "nextSegment": "P3"
     },
     {
       "label": "P3終了",
       "segmentId": "P3_END",
-      "nextSegment": "RETURN"
+      "nextSegment": "RECOVERY_START"
     },
     {
       "label": "ルート終了",
-      "segmentId": "ROUTE_END",
+      "segmentId": "RECOVERY_START",
       "nextSegment": "RECOVERY"
     },
     {

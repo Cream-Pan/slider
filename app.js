@@ -2,14 +2,6 @@
 
 const DEFAULT_CONFIG = {
   appName: '温熱環境主観評価',
-  checkpointSequence: [
-    { label: '実験開始', segmentId: 'START', nextSegment: 'P1' },
-    { label: 'P1終了', segmentId: 'P1_END', nextSegment: 'P2' },
-    { label: 'P2終了', segmentId: 'P2_END', nextSegment: 'P3' },
-    { label: 'P3終了', segmentId: 'P3_END', nextSegment: 'RETURN' },
-    { label: 'ルート終了', segmentId: 'ROUTE_END', nextSegment: 'RECOVERY' },
-    { label: '回復終了', segmentId: 'RECOVERY_END', nextSegment: 'COMPLETE' }
-  ],
   gpsOptions: {
     enableHighAccuracy: true,
     maximumAge: 1000,
@@ -24,42 +16,6 @@ const DEFAULT_CONFIG = {
 const DB_NAME = 'thermal-subjective-evaluation-db';
 const DB_VERSION = 1;
 const ACTIVE_SESSION_KEY = 'thermal-evaluation-active-session';
-
-const SENSATION_LABELS = {
-  '-3': '寒い',
-  '-2': '涼しい',
-  '-1': 'やや涼しい',
-  '0': 'どちらでもない',
-  '1': 'やや暖かい',
-  '2': '暖かい',
-  '3': '暑い'
-};
-
-const COMFORT_LABELS = {
-  '-3': '非常に快い',
-  '-2': '快い',
-  '-1': 'やや快い',
-  '0': 'どちらでもない',
-  '1': 'やや不快',
-  '2': '不快',
-  '3': '非常に不快'
-};
-
-// const COMFORT_LABELS = {
-//   '-3': '非常に不快',
-//   '-2': '不快',
-//   '-1': 'やや不快',
-//   '0': 'どちらでもない',
-//   '1': 'やや快い',
-//   '2': '快い',
-//   '3': '非常に快い'
-// };
-
-const PREFERENCE_LABELS = {
-  cooler: 'もっと涼しく',
-  no_change: 'このままでよい',
-  warmer: 'もっと暖かく'
-};
 
 let config = DEFAULT_CONFIG;
 let db = null;
@@ -77,8 +33,18 @@ async function initializeApp() {
   cacheElements();
   bindEvents();
 
-  config = await loadConfig();
-  document.title = config.appName;
+  try {
+    config = await loadConfig();
+    document.title = config.appName;
+  } catch (error) {
+    console.error(error);
+    els.startExperimentBtn.disabled = true;
+    showMessage(
+      'config.jsonの読み込みに失敗しました．実験設定を確認してください．',
+      'error'
+    );
+    return;
+  }
 
   try {
     db = await openDatabase();
@@ -115,12 +81,12 @@ function cacheElements() {
   const ids = [
     'offlineBadge', 'messageArea', 'startView', 'participantId', 'startExperimentBtn',
     'experimentView', 'activeParticipantId', 'elapsedTime', 'gpsStatus', 'currentSegment',
-    'subjectiveCount', 'gpsCount', 'changeEvaluationBtn', 'checkpointEvaluationBtn',
+    'subjectiveCount', 'gpsCount', 'comfortableChangeBtn', 'uncomfortableChangeBtn', 'checkpointEvaluationBtn',
     'checkpointButtonLabel', 'finishView', 'finishSummary',
     'downloadAllBtn', 'newExperimentBtn', 'evaluationModal',
-    'evaluationTriggerLabel', 'evaluationTitle', 'closeEvaluationBtn', 'sensationSlider',
-    'sensationOutput', 'comfortSlider', 'comfortOutput', 'preferenceButtons',
-    'preferenceOutput', 'cancelEvaluationBtn', 'submitEvaluationBtn'
+    'evaluationTriggerLabel', 'evaluationTitle', 'closeEvaluationBtn',
+    'sensationButtons', 'comfortButtons',
+    'cancelEvaluationBtn', 'submitEvaluationBtn'
   ];
 
   for (const id of ids) {
@@ -134,26 +100,21 @@ function bindEvents() {
   });
 
   els.startExperimentBtn.addEventListener('click', startExperiment);
-  els.changeEvaluationBtn.addEventListener('click', () => openEvaluation('self_change'));
+  els.comfortableChangeBtn.addEventListener('click', () => recordDirectionalChange('comfortable_change'));
+  els.uncomfortableChangeBtn.addEventListener('click', () => recordDirectionalChange('uncomfortable_change'));
   els.checkpointEvaluationBtn.addEventListener('click', () => openEvaluation('checkpoint'));
   els.closeEvaluationBtn.addEventListener('click', cancelEvaluation);
   els.cancelEvaluationBtn.addEventListener('click', cancelEvaluation);
   els.submitEvaluationBtn.addEventListener('click', submitEvaluation);
 
-  for (const slider of [els.sensationSlider, els.comfortSlider]) {
-    slider.addEventListener('pointerdown', () => markSliderTouched(slider));
-    slider.addEventListener('input', () => {
-      markSliderTouched(slider);
-      updateEvaluationOutputs();
-    });
-    slider.addEventListener('change', updateEvaluationOutputs);
-  }
+  for (const group of [els.sensationButtons, els.comfortButtons]) {
+    group.addEventListener('click', event => {
+      const button = event.target.closest('.choice-button');
+      if (!button) return;
 
-  els.preferenceButtons.addEventListener('click', event => {
-    const button = event.target.closest('.preference-button');
-    if (!button) return;
-    selectPreference(button.dataset.value);
-  });
+      selectChoice(group, button.dataset.value);
+    });
+  }
 
   els.downloadAllBtn.addEventListener('click', downloadAllCsvFiles);
   els.newExperimentBtn.addEventListener('click', resetForNewExperiment);
@@ -174,23 +135,33 @@ function bindEvents() {
 }
 
 async function loadConfig() {
-  try {
-    const response = await fetch('config.json', { cache: 'no-store' });
-    if (!response.ok) throw new Error(`config.json: ${response.status}`);
-    const loaded = await response.json();
-    return {
-      ...DEFAULT_CONFIG,
-      ...loaded,
-      gpsOptions: { ...DEFAULT_CONFIG.gpsOptions, ...(loaded.gpsOptions || {}) },
-      gpsAccuracyThresholds: {
-        ...DEFAULT_CONFIG.gpsAccuracyThresholds,
-        ...(loaded.gpsAccuracyThresholds || {})
-      }
-    };
-  } catch (error) {
-    console.warn('config.jsonを読み込めなかったため，既定値を使用します．', error);
-    return DEFAULT_CONFIG;
+  const response = await fetch('config.json', { cache: 'no-store' });
+
+  if (!response.ok) {
+    throw new Error(`config.json: ${response.status}`);
   }
+
+  const loaded = await response.json();
+
+  if (
+    !Array.isArray(loaded.checkpointSequence) ||
+    loaded.checkpointSequence.length !== 14
+  ) {
+    throw new Error('checkpointSequence は14件設定してください．');
+  }
+
+  return {
+    ...DEFAULT_CONFIG,
+    ...loaded,
+    gpsOptions: {
+      ...DEFAULT_CONFIG.gpsOptions,
+      ...(loaded.gpsOptions || {})
+    },
+    gpsAccuracyThresholds: {
+      ...DEFAULT_CONFIG.gpsAccuracyThresholds,
+      ...(loaded.gpsAccuracyThresholds || {})
+    }
+  };
 }
 
 function sanitizeParticipantId(value) {
@@ -255,7 +226,11 @@ function renderExperimentState() {
     els.checkpointEvaluationBtn.disabled = true;
   }
 
-  els.changeEvaluationBtn.disabled = !state.startedAt || state.currentSegment === 'COMPLETE';
+  const directionChangeDisabled =
+    !state.startedAt || state.currentSegment === 'COMPLETE';
+
+  els.comfortableChangeBtn.disabled = directionChangeDisabled;
+  els.uncomfortableChangeBtn.disabled = directionChangeDisabled;
 
   if (!state.startedAt) {
     els.elapsedTime.textContent = '未開始';
@@ -266,11 +241,15 @@ function renderExperimentState() {
 function segmentDisplayName(segment) {
   const labels = {
     PRE_START: '開始前',
-    P1: 'P1',
-    P2: 'P2',
-    P3: 'P3',
-    RETURN: '帰路',
-    RECOVERY: '回復',
+    SUN1: '日向①',
+    SUN1_TO_SHADE1: '日向①から日陰①への移動',
+    SHADE1: '日陰①',
+    SHADE1_TO_BREAK: '室内休憩への移動',
+    BREAK: '室内休憩',
+    BREAK_TO_SHADE2: '室内休憩から日陰②への移動',
+    SHADE2: '日陰②',
+    SHADE2_TO_SUN2: '日陰②から日向②への移動',
+    SUN2: '日向②',
     COMPLETE: '完了'
   };
   return labels[segment] || segment || '―';
@@ -278,34 +257,29 @@ function segmentDisplayName(segment) {
 
 function openEvaluation(type) {
   if (!state.active) return;
+  if (type !== 'checkpoint') return;
 
-  let segmentId;
-  let title;
-  let triggerLabel;
+  const checkpoint =
+    config.checkpointSequence[state.checkpointIndex];
 
-  if (type === 'checkpoint') {
-    const checkpoint = config.checkpointSequence[state.checkpointIndex];
-    if (!checkpoint) return;
-    segmentId = checkpoint.segmentId;
-    title = `定期地点評価：${checkpoint.label}`;
-    triggerLabel = '定期地点評価';
-  } else {
-    segmentId = state.currentSegment;
-    title = '変動による評価';
-    triggerLabel = `現在区間：${segmentDisplayName(state.currentSegment)}`;
-  }
+  if (!checkpoint) return;
 
   pendingEvaluation = {
-    type,
-    triggerType: type === 'checkpoint' ? 'checkpoint' : 'self_change',
-    segmentId,
+    type: 'checkpoint',
+    triggerType: 'checkpoint',
+    segmentId: checkpoint.segmentId,
     startedAt: formatLocalTimeWithMs(Date.now()),
     startedEpochMs: Date.now()
   };
 
-  els.evaluationTitle.textContent = title;
-  els.evaluationTriggerLabel.textContent = triggerLabel;
+  els.evaluationTitle.textContent =
+    `定期地点評価：${checkpoint.label}`;
+
+  els.evaluationTriggerLabel.textContent =
+    '定期地点評価';
+
   prepareEvaluationForm();
+
   els.evaluationModal.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
 }
@@ -314,65 +288,109 @@ function prepareEvaluationForm() {
   const previous = state.lastEvaluation;
 
   if (previous) {
-    setSliderState(els.sensationSlider, previous.thermal_sensation, true);
-    setSliderState(els.comfortSlider, previous.thermal_comfort, true);
-    selectPreference(previous.thermal_preference, false);
+    selectChoice(
+      els.sensationButtons,
+      previous.thermal_sensation,
+      false
+    );
+
+    selectChoice(
+      els.comfortButtons,
+      previous.thermal_comfort,
+      false
+    );
   } else {
-    setSliderState(els.sensationSlider, 0, false);
-    setSliderState(els.comfortSlider, 0, false);
-    selectPreference(null, false);
+    selectChoice(els.sensationButtons, null, false);
+    selectChoice(els.comfortButtons, null, false);
   }
 
-  updateEvaluationOutputs();
+  updateEvaluationState();
 }
 
-function setSliderState(slider, value, touched) {
-  slider.value = String(value);
-  slider.dataset.touched = touched ? 'true' : 'false';
-  slider.classList.toggle('untouched', !touched);
-}
+function selectChoice(group, value, update = true) {
+  group.dataset.selectedValue = value || '';
 
-function markSliderTouched(slider) {
-  slider.dataset.touched = 'true';
-  slider.classList.remove('untouched');
-}
+  for (const button of group.querySelectorAll('.choice-button')) {
+    const selected = button.dataset.value === value;
 
-function selectPreference(value, update = true) {
-  for (const button of els.preferenceButtons.querySelectorAll('.preference-button')) {
-    button.classList.toggle('selected', button.dataset.value === value);
+    button.classList.toggle('selected', selected);
+    button.setAttribute('aria-pressed', selected ? 'true' : 'false');
   }
-  els.preferenceButtons.dataset.selectedValue = value || '';
-  if (update) updateEvaluationOutputs();
+
+  if (update) {
+    updateEvaluationState();
+  }
 }
 
-function updateEvaluationOutputs() {
-  const sensationTouched = els.sensationSlider.dataset.touched === 'true';
-  const comfortTouched = els.comfortSlider.dataset.touched === 'true';
-  const preference = els.preferenceButtons.dataset.selectedValue;
+function updateEvaluationState() {
+  const sensation = els.sensationButtons.dataset.selectedValue;
+  const comfort = els.comfortButtons.dataset.selectedValue;
 
-  els.sensationOutput.textContent = sensationTouched
-    ? `${formatSignedNumber(els.sensationSlider.value)}：${SENSATION_LABELS[els.sensationSlider.value]}`
-    : '未選択';
-
-  els.comfortOutput.textContent = comfortTouched
-    ? `${formatSignedNumber(els.comfortSlider.value)}：${COMFORT_LABELS[els.comfortSlider.value]}`
-    : '未選択';
-
-  els.preferenceOutput.textContent = preference ? PREFERENCE_LABELS[preference] : '未選択';
-  els.submitEvaluationBtn.disabled = !(sensationTouched && comfortTouched && preference);
-}
-
-function formatSignedNumber(value) {
-  const number = Number(value);
-  if (number > 0) return `＋${number}`;
-  if (number < 0) return `−${Math.abs(number)}`;
-  return '0';
+  els.submitEvaluationBtn.disabled = !(sensation && comfort);
 }
 
 function cancelEvaluation() {
   pendingEvaluation = null;
   els.evaluationModal.classList.add('hidden');
   document.body.style.overflow = '';
+}
+
+async function recordDirectionalChange(triggerType) {
+  if (
+    !state.active ||
+    !state.startedAt ||
+    state.currentSegment === 'COMPLETE'
+  ) {
+    return;
+  }
+
+  const nowEpochMs = Date.now();
+  const timestamp = formatLocalTimeWithMs(nowEpochMs);
+
+  const csvRecord = {
+    trigger_type: triggerType,
+    segment_id: state.currentSegment,
+    evaluation_started_at: timestamp,
+    evaluation_submitted_at: timestamp,
+    response_duration_ms: 0,
+    thermal_sensation: '',
+    thermal_comfort: ''
+  };
+
+  try {
+    els.comfortableChangeBtn.disabled = true;
+    els.uncomfortableChangeBtn.disabled = true;
+
+    await addStoreRecord('subjective', {
+      sessionId: state.sessionId,
+      ...csvRecord
+    });
+
+    state.subjectiveCount += 1;
+
+    await saveSessionState();
+
+    els.subjectiveCount.textContent = String(state.subjectiveCount);
+
+    const message =
+      triggerType === 'comfortable_change'
+        ? '「快適な方向に変化した」を記録しました．'
+        : '「不快な方向に変化した」を記録しました．';
+
+    showMessage(message);
+
+  } catch (error) {
+    console.error(error);
+    showMessage(
+      '変化イベントを保存できませんでした．もう一度試してください．',
+      'error'
+    );
+  } finally {
+    if (state.active && state.currentSegment !== 'COMPLETE') {
+      els.comfortableChangeBtn.disabled = false;
+      els.uncomfortableChangeBtn.disabled = false;
+    }
+  }
 }
 
 async function submitEvaluation() {
@@ -387,9 +405,8 @@ async function submitEvaluation() {
     evaluation_started_at: pendingEvaluation.startedAt,
     evaluation_submitted_at: formatLocalTimeWithMs(submittedEpochMs),
     response_duration_ms: submittedEpochMs - pendingEvaluation.startedEpochMs,
-    thermal_sensation: Number(els.sensationSlider.value),
-    thermal_comfort: Number(els.comfortSlider.value),
-    thermal_preference: els.preferenceButtons.dataset.selectedValue
+    thermal_sensation: els.sensationButtons.dataset.selectedValue,
+    thermal_comfort: els.comfortButtons.dataset.selectedValue
   };
 
   try {
@@ -400,8 +417,7 @@ async function submitEvaluation() {
 
     state.lastEvaluation = {
       thermal_sensation: csvRecord.thermal_sensation,
-      thermal_comfort: csvRecord.thermal_comfort,
-      thermal_preference: csvRecord.thermal_preference
+      thermal_comfort: csvRecord.thermal_comfort
     };
     state.subjectiveCount += 1;
 
@@ -576,8 +592,7 @@ async function downloadAllCsvFiles() {
       'evaluation_submitted_at',
       'response_duration_ms',
       'thermal_sensation',
-      'thermal_comfort',
-      'thermal_preference'
+      'thermal_comfort'
     ];
 
     const gpsColumns = [

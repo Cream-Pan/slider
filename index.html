@@ -84,17 +84,38 @@
           評価時は安全な場所で停止し，回答完了後に歩行を再開してください．
         </p>
 
-        <div class="action-grid">
-          <button id="changeEvaluationBtn" class="evaluation-button change-button" type="button" disabled>
+        <div class="change-direction-grid">
+          <button
+            id="comfortableChangeBtn"
+            class="direction-change-button"
+            type="button"
+            disabled
+          >
             <span class="button-kicker">感じ方が変わったとき</span>
-            <span class="button-main">変動による評価</span>
+            <span class="button-main">快適な方向に変化した</span>
           </button>
 
-          <button id="checkpointEvaluationBtn" class="evaluation-button checkpoint-button" type="button">
-            <span class="button-kicker">実験者の指示で回答</span>
-            <span id="checkpointButtonLabel" class="button-main">定期地点評価：実験開始</span>
+          <button
+            id="uncomfortableChangeBtn"
+            class="direction-change-button"
+            type="button"
+            disabled
+          >
+            <span class="button-kicker">感じ方が変わったとき</span>
+            <span class="button-main">不快な方向に変化した</span>
           </button>
         </div>
+
+        <button
+          id="checkpointEvaluationBtn"
+          class="evaluation-button checkpoint-button checkpoint-full"
+          type="button"
+        >
+          <span class="button-kicker">実験者の指示で回答</span>
+          <span id="checkpointButtonLabel" class="button-main">
+            定期地点評価：実験開始
+          </span>
+        </button>
       </section>
 
     </section>
@@ -125,45 +146,50 @@
         <section class="question-block">
           <div class="question-header">
             <h3>1．温冷感</h3>
-            <output id="sensationOutput" class="answer-output">未選択</output>
           </div>
-          <p class="question-text">現在，体全体としてどの程度寒い，または暑いと感じますか．</p>
-          <div class="slider-wrap">
-            <span class="slider-end">寒い</span>
-            <input id="sensationSlider" class="discrete-slider untouched" type="range" min="-3" max="3" step="1" value="0">
-            <span class="slider-end">暑い</span>
-          </div>
-          <div class="slider-ticks" aria-hidden="true">
-            <span>−3</span><span>−2</span><span>−1</span><span>0</span><span>＋1</span><span>＋2</span><span>＋3</span>
+
+          <p class="question-text">
+            現在，体全体としてどの程度寒い，または暑いと感じますか．
+          </p>
+
+          <div id="sensationButtons"
+              class="choice-grid"
+              role="group"
+              aria-label="温冷感">
+
+            <button type="button" class="choice-button" data-value="寒い">寒い</button>
+            <button type="button" class="choice-button" data-value="涼しい">涼しい</button>
+            <button type="button" class="choice-button" data-value="やや涼しい">やや涼しい</button>
+            <button type="button" class="choice-button" data-value="どちらでもない">どちらでもない</button>
+            <button type="button" class="choice-button" data-value="やや暖かい">やや暖かい</button>
+            <button type="button" class="choice-button" data-value="暖かい">暖かい</button>
+            <button type="button" class="choice-button" data-value="暑い">暑い</button>
+
           </div>
         </section>
 
         <section class="question-block">
           <div class="question-header">
             <h3>2．温熱的快・不快</h3>
-            <output id="comfortOutput" class="answer-output">未選択</output>
           </div>
-          <p class="question-text">現在の温熱状態を，どの程度快い，または不快と感じますか．</p>
-          <div class="slider-wrap">
-            <span class="slider-end">非常に快い</span>
-            <input id="comfortSlider" class="discrete-slider untouched" type="range" min="-3" max="3" step="1" value="0">
-            <span class="slider-end">非常に不快</span>
-          </div>
-          <div class="slider-ticks" aria-hidden="true">
-            <span>−3</span><span>−2</span><span>−1</span><span>0</span><span>＋1</span><span>＋2</span><span>＋3</span>
-          </div>
-        </section>
 
-        <section class="question-block">
-          <div class="question-header">
-            <h3>3．温熱選好</h3>
-            <output id="preferenceOutput" class="answer-output">未選択</output>
-          </div>
-          <p class="question-text">現在の温熱環境を，どのように変えてほしいですか．</p>
-          <div id="preferenceButtons" class="preference-grid" role="group" aria-label="温熱選好">
-            <button type="button" class="preference-button" data-value="cooler">もっと涼しく</button>
-            <button type="button" class="preference-button" data-value="no_change">このままでよい</button>
-            <button type="button" class="preference-button" data-value="warmer">もっと暖かく</button>
+          <p class="question-text">
+            現在の温熱状態を，どの程度快い，または不快と感じますか．
+          </p>
+
+          <div id="comfortButtons"
+              class="choice-grid"
+              role="group"
+              aria-label="温熱的快不快">
+
+            <button type="button" class="choice-button" data-value="非常に快い">非常に快い</button>
+            <button type="button" class="choice-button" data-value="快い">快い</button>
+            <button type="button" class="choice-button" data-value="やや快い">やや快い</button>
+            <button type="button" class="choice-button" data-value="どちらでもない">どちらでもない</button>
+            <button type="button" class="choice-button" data-value="やや不快">やや不快</button>
+            <button type="button" class="choice-button" data-value="不快">不快</button>
+            <button type="button" class="choice-button" data-value="非常に不快">非常に不快</button>
+
           </div>
         </section>
       </div>

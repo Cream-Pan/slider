@@ -2,38 +2,73 @@
   "appName": "温熱環境主観評価",
   "checkpointSequence": [
     {
-      "label": "実験開始",
-      "segmentId": "START",
-      "nextSegment": "P1"
+      "label": "実験開始・日向①開始時",
+      "segmentId": "SUN1_START",
+      "nextSegment": "SUN1"
     },
     {
-      "label": "P1終了",
-      "segmentId": "P1_END",
-      "nextSegment": "P2"
+      "label": "日向①開始から5 min後",
+      "segmentId": "SUN1_5MIN",
+      "nextSegment": "SUN1"
     },
     {
-      "label": "涼しい棟通過",
-      "segmentId": "P2_END",
-      "nextSegment": "P3_START"
+      "label": "日向①開始から10 min後",
+      "segmentId": "SUN1_10MIN",
+      "nextSegment": "SUN1_TO_SHADE1"
     },
     {
-      "label": "P3着",
-      "segmentId": "P3_START",
-      "nextSegment": "P3"
+      "label": "日陰①開始時",
+      "segmentId": "SHADE1_START",
+      "nextSegment": "SHADE1"
     },
     {
-      "label": "P3終了",
-      "segmentId": "P3_END",
-      "nextSegment": "RECOVERY_START"
+      "label": "日陰①開始から5 min後",
+      "segmentId": "SHADE1_5MIN",
+      "nextSegment": "SHADE1"
     },
     {
-      "label": "ルート終了",
-      "segmentId": "RECOVERY_START",
-      "nextSegment": "RECOVERY"
+      "label": "日陰①開始から10 min後",
+      "segmentId": "SHADE1_10MIN",
+      "nextSegment": "SHADE1_TO_BREAK"
     },
     {
-      "label": "回復終了",
-      "segmentId": "RECOVERY_END",
+      "label": "室内休憩開始時",
+      "segmentId": "BREAK_START",
+      "nextSegment": "BREAK"
+    },
+    {
+      "label": "室内休憩開始から10 min後",
+      "segmentId": "BREAK_10MIN",
+      "nextSegment": "BREAK_TO_SHADE2"
+    },
+    {
+      "label": "日陰②開始時",
+      "segmentId": "SHADE2_START",
+      "nextSegment": "SHADE2"
+    },
+    {
+      "label": "日陰②開始から5 min後",
+      "segmentId": "SHADE2_5MIN",
+      "nextSegment": "SHADE2"
+    },
+    {
+      "label": "日陰②開始から10 min後",
+      "segmentId": "SHADE2_10MIN",
+      "nextSegment": "SHADE2_TO_SUN2"
+    },
+    {
+      "label": "日向②開始時",
+      "segmentId": "SUN2_START",
+      "nextSegment": "SUN2"
+    },
+    {
+      "label": "日向②開始から5 min後",
+      "segmentId": "SUN2_5MIN",
+      "nextSegment": "SUN2"
+    },
+    {
+      "label": "日向②開始から10 min後・実験終了時",
+      "segmentId": "SUN2_10MIN_END",
       "nextSegment": "COMPLETE"
     }
   ],

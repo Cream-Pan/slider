@@ -72,6 +72,7 @@ function createInitialState() {
     checkpointIndex: 0,
     currentSegment: 'PRE_START',
     lastEvaluation: null,
+    eventInputEnabled: null,
     subjectiveCount: 0,
     gpsCount: 0
   };
@@ -81,7 +82,7 @@ function cacheElements() {
   const ids = [
     'offlineBadge', 'messageArea', 'startView', 'participantId', 'startExperimentBtn',
     'experimentView', 'activeParticipantId', 'elapsedTime', 'gpsStatus', 'currentSegment',
-    'subjectiveCount', 'gpsCount', 'comfortableChangeBtn', 'uncomfortableChangeBtn', 'checkpointEvaluationBtn',
+    'subjectiveCount', 'gpsCount', 'eventInputArea', 'comfortableChangeBtn', 'uncomfortableChangeBtn', 'checkpointEvaluationBtn',
     'checkpointButtonLabel', 'finishView', 'finishSummary',
     'downloadAllBtn', 'newExperimentBtn', 'evaluationModal',
     'evaluationTriggerLabel', 'evaluationTitle', 'closeEvaluationBtn',
@@ -180,7 +181,28 @@ async function startExperiment() {
     return;
   }
 
-  const confirmed = window.confirm(`参加者ID：${participantId}\n\nこの設定で実験を開始しますか．`);
+  const eventInputSetting = document.querySelector(
+    'input[name="eventInputSetting"]:checked'
+  );
+
+  if (!eventInputSetting) {
+    showMessage(
+      'イベント入力を「有」または「無」から選択してください．',
+      'warning'
+    );
+    return;
+  }
+
+  const eventInputEnabled = eventInputSetting.value === 'enabled';
+
+  const eventInputText = eventInputEnabled ? '有' : '無';
+
+  const confirmed = window.confirm(
+    `参加者ID：${participantId}\n`
+    + `イベント入力：${eventInputText}\n\n`
+    + `この設定で実験を開始しますか．`
+  );
+
   if (!confirmed) return;
 
   const now = new Date();
@@ -189,6 +211,7 @@ async function startExperiment() {
     ...createInitialState(),
     sessionId: `${participantId}_${toCompactLocalTimestamp(now)}`,
     participantId,
+    eventInputEnabled,
     createdAt: formatLocalTimeWithMs(nowEpochMs),
     active: true
   };
@@ -226,16 +249,18 @@ function renderExperimentState() {
     els.checkpointEvaluationBtn.disabled = true;
   }
 
-  const directionChangeDisabled =
-    !state.startedAt || state.currentSegment === 'COMPLETE';
+  const eventInputEnabled = state.eventInputEnabled === true;
 
-  els.comfortableChangeBtn.disabled = directionChangeDisabled;
-  els.uncomfortableChangeBtn.disabled = directionChangeDisabled;
+  els.eventInputArea.classList.toggle(
+    'hidden',
+    !eventInputEnabled
+  );
 
-  if (!state.startedAt) {
-    els.elapsedTime.textContent = '未開始';
-    els.gpsStatus.textContent = '開始待ち';
-  }
+  const directionChangeDisabled = !state.startedAt || state.currentSegment === 'COMPLETE';
+
+  els.comfortableChangeBtn.disabled = !eventInputEnabled || directionChangeDisabled;
+
+  els.uncomfortableChangeBtn.disabled = !eventInputEnabled || directionChangeDisabled;
 }
 
 function segmentDisplayName(segment) {
@@ -338,6 +363,7 @@ function cancelEvaluation() {
 async function recordDirectionalChange(triggerType) {
   if (
     !state.active ||
+    !state.eventInputEnabled ||
     !state.startedAt ||
     state.currentSegment === 'COMPLETE'
   ) {
@@ -569,7 +595,7 @@ function showFinishView() {
   els.finishView.classList.remove('hidden');
 
   const durationText = formatElapsedDuration(getMeasurementDurationMs());
-  els.finishSummary.textContent = `測定時間 ${durationText}，主観評価 ${state.subjectiveCount} 件，GPS ${state.gpsCount} 件を記録しました．`;
+  els.finishSummary.textContent = `測定時間 ${durationText}，評価・イベント記録 ${state.subjectiveCount} 件，GPS ${state.gpsCount} 件を記録しました．`;
   showMessage('最後の定期地点評価を保存し，測定を終了しました．CSV保存ボタンから2つのファイルを保存してください．');
 }
 
@@ -656,6 +682,10 @@ function resetForNewExperiment() {
   state = createInitialState();
   pendingEvaluation = null;
   els.participantId.value = '';
+  document.querySelectorAll('input[name="eventInputSetting"]')
+    .forEach(input => {
+      input.checked = false;
+    });
   els.finishView.classList.add('hidden');
   els.experimentView.classList.add('hidden');
   els.startView.classList.remove('hidden');

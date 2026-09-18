@@ -43,7 +43,35 @@
 
       <div class="info-box">
         <strong>開始前の確認</strong>
-        <p>このボタンでは測定を開始しません．実験開始時の定期地点評価を送信すると，時間計測とGPS記録を開始します．</p>
+        <p>「実験を開始する」を押すとGPS記録を開始します．実験開始時の定期地点評価を送信すると，時間計測を開始します．</p>
+      </div>
+
+      <div class="form-group">
+        <label>イベント入力</label>
+
+        <div class="event-setting-grid">
+          <label class="event-setting-option">
+            <input
+              type="radio"
+              name="eventInputSetting"
+              value="enabled"
+            >
+            <span>有</span>
+          </label>
+
+          <label class="event-setting-option">
+            <input
+              type="radio"
+              name="eventInputSetting"
+              value="disabled"
+            >
+            <span>無</span>
+          </label>
+        </div>
+
+        <p class="tiny-muted">
+          「有」を選択した場合のみ，実験中に快適・不快方向への変化を記録するボタンを表示します．
+        </p>
       </div>
 
       <button id="startExperimentBtn" class="primary-action" type="button">
@@ -73,7 +101,7 @@
         </div>
 
         <div class="record-counts tiny-muted">
-          主観評価：<span id="subjectiveCount" class="val">0</span> 件 ／
+          評価・イベント記録：<span id="subjectiveCount" class="val">0</span> 件 ／
           GPS：<span id="gpsCount" class="val">0</span> 件
         </div>
       </section>
@@ -84,26 +112,28 @@
           評価時は安全な場所で停止し，回答完了後に歩行を再開してください．
         </p>
 
-        <div class="change-direction-grid">
-          <button
-            id="comfortableChangeBtn"
-            class="direction-change-button"
-            type="button"
-            disabled
-          >
-            <span class="button-kicker">感じ方が変わったとき</span>
-            <span class="button-main">快適な方向に変化した</span>
-          </button>
+        <div id="eventInputArea" class="hidden">
+          <div class="change-direction-grid">
+            <button
+              id="comfortableChangeBtn"
+              class="direction-change-button"
+              type="button"
+              disabled
+            >
+              <span class="button-kicker">感じ方が変わったとき</span>
+              <span class="button-main">快適な方向に変化した</span>
+            </button>
 
-          <button
-            id="uncomfortableChangeBtn"
-            class="direction-change-button"
-            type="button"
-            disabled
-          >
-            <span class="button-kicker">感じ方が変わったとき</span>
-            <span class="button-main">不快な方向に変化した</span>
-          </button>
+            <button
+              id="uncomfortableChangeBtn"
+              class="direction-change-button"
+              type="button"
+              disabled
+            >
+              <span class="button-kicker">感じ方が変わったとき</span>
+              <span class="button-main">不快な方向に変化した</span>
+            </button>
+          </div>
         </div>
 
         <button

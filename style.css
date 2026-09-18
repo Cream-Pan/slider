@@ -542,3 +542,34 @@ p {
     padding-left: 1rem;
   }
 }
+
+.event-setting-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.event-setting-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  min-height: 52px;
+  padding: 0.7rem;
+
+  border: 2px solid #aaa;
+  border-radius: 6px;
+
+  background: #fff;
+  color: #333;
+
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.event-setting-option input {
+  width: 18px;
+  height: 18px;
+  accent-color: #666;
+}

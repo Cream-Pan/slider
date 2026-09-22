@@ -545,7 +545,7 @@ p {
 
 .event-setting-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 0.75rem;
 }
 
@@ -572,4 +572,15 @@ p {
   width: 18px;
   height: 18px;
   accent-color: #666;
+}
+
+.event-evaluation-button {
+  width: 100%;
+  margin-top: 0.75rem;
+}
+
+@media (max-width: 560px) {
+  .event-setting-grid {
+    grid-template-columns: 1fr;
+  }
 }

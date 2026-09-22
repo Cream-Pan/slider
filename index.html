@@ -49,23 +49,32 @@
             <input
               type="radio"
               name="eventInputSetting"
-              value="enabled"
+              value="disabled"
             >
-            <span>有</span>
+            <span>無</span>
           </label>
 
           <label class="event-setting-option">
             <input
               type="radio"
               name="eventInputSetting"
-              value="disabled"
+              value="direction"
             >
-            <span>無</span>
+            <span>快・不快方向</span>
+          </label>
+
+          <label class="event-setting-option">
+            <input
+              type="radio"
+              name="eventInputSetting"
+              value="evaluation"
+            >
+            <span>定期評価と同じ項目</span>
           </label>
         </div>
 
         <p class="tiny-muted">
-          「有」を選択した場合のみ，実験中に快適・不快方向への変化を記録するボタンを表示します．
+          「快・不快方向」では変化方向を記録し，「定期評価と同じ項目」では温冷感と温熱的快・不快を任意のタイミングで回答できます．
         </p>
       </div>
 
@@ -134,6 +143,18 @@
               <span class="button-main">不快な方向に変化した</span>
             </button>
           </div>
+        </div>
+
+        <div id="eventEvaluationArea" class="hidden">
+          <button
+            id="eventEvaluationBtn"
+            class="evaluation-button event-evaluation-button"
+            type="button"
+            disabled
+          >
+            <span class="button-kicker">好きなタイミングで回答</span>
+            <span class="button-main">任意評価</span>
+          </button>
         </div>
 
         <button

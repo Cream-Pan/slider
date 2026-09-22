@@ -72,7 +72,7 @@ function createInitialState() {
     checkpointIndex: 0,
     currentSegment: 'PRE_START',
     lastEvaluation: null,
-    eventInputEnabled: null,
+    eventInputMode: null,
     subjectiveCount: 0,
     gpsCount: 0
   };
@@ -82,7 +82,7 @@ function cacheElements() {
   const ids = [
     'offlineBadge', 'messageArea', 'startView', 'participantId', 'startExperimentBtn',
     'experimentView', 'activeParticipantId', 'elapsedTime', 'gpsStatus', 'currentSegment',
-    'subjectiveCount', 'gpsCount', 'eventInputArea', 'comfortableChangeBtn', 'uncomfortableChangeBtn', 'checkpointEvaluationBtn',
+    'subjectiveCount', 'gpsCount', 'eventInputArea', 'comfortableChangeBtn', 'uncomfortableChangeBtn', 'eventEvaluationArea', 'eventEvaluationBtn', 'checkpointEvaluationBtn',
     'checkpointButtonLabel', 'finishView', 'finishSummary',
     'downloadAllBtn', 'newExperimentBtn', 'evaluationModal',
     'evaluationTriggerLabel', 'evaluationTitle', 'closeEvaluationBtn',
@@ -103,6 +103,7 @@ function bindEvents() {
   els.startExperimentBtn.addEventListener('click', startExperiment);
   els.comfortableChangeBtn.addEventListener('click', () => recordDirectionalChange('comfortable_change'));
   els.uncomfortableChangeBtn.addEventListener('click', () => recordDirectionalChange('uncomfortable_change'));
+  els.eventEvaluationBtn.addEventListener('click', () => openEvaluation('event_evaluation'));
   els.checkpointEvaluationBtn.addEventListener('click', () => openEvaluation('checkpoint'));
   els.closeEvaluationBtn.addEventListener('click', cancelEvaluation);
   els.cancelEvaluationBtn.addEventListener('click', cancelEvaluation);
@@ -187,15 +188,18 @@ async function startExperiment() {
 
   if (!eventInputSetting) {
     showMessage(
-      'イベント入力を「有」または「無」から選択してください．',
+      'イベント入力の方法を3つの選択肢から選択してください．',
       'warning'
     );
     return;
   }
 
-  const eventInputEnabled = eventInputSetting.value === 'enabled';
-
-  const eventInputText = eventInputEnabled ? '有' : '無';
+  const eventInputMode = eventInputSetting.value;
+  const eventInputText = {
+    disabled: '無',
+    direction: '快・不快方向',
+    evaluation: '定期評価と同じ項目'
+  }[eventInputMode];
 
   const confirmed = window.confirm(
     `参加者ID：${participantId}\n`
@@ -211,7 +215,7 @@ async function startExperiment() {
     ...createInitialState(),
     sessionId: `${participantId}_${toCompactLocalTimestamp(now)}`,
     participantId,
-    eventInputEnabled,
+    eventInputMode,
     createdAt: formatLocalTimeWithMs(nowEpochMs),
     active: true
   };
@@ -249,18 +253,34 @@ function renderExperimentState() {
     els.checkpointEvaluationBtn.disabled = true;
   }
 
-  const eventInputEnabled = state.eventInputEnabled === true;
+  const eventInputMode = getEventInputMode();
+  const directionInputEnabled = eventInputMode === 'direction';
+  const evaluationInputEnabled = eventInputMode === 'evaluation';
 
   els.eventInputArea.classList.toggle(
     'hidden',
-    !eventInputEnabled
+    !directionInputEnabled
+  );
+
+  els.eventEvaluationArea.classList.toggle(
+    'hidden',
+    !evaluationInputEnabled
   );
 
   const directionChangeDisabled = !state.startedAt || state.currentSegment === 'COMPLETE';
 
-  els.comfortableChangeBtn.disabled = !eventInputEnabled || directionChangeDisabled;
+  els.comfortableChangeBtn.disabled = !directionInputEnabled || directionChangeDisabled;
 
-  els.uncomfortableChangeBtn.disabled = !eventInputEnabled || directionChangeDisabled;
+  els.uncomfortableChangeBtn.disabled = !directionInputEnabled || directionChangeDisabled;
+  els.eventEvaluationBtn.disabled = !evaluationInputEnabled || directionChangeDisabled;
+}
+
+function getEventInputMode() {
+  if (state.eventInputMode) return state.eventInputMode;
+
+  // 旧バージョンで保存したセッションを再開する場合の互換性。
+  if (state.eventInputEnabled === true) return 'direction';
+  return 'disabled';
 }
 
 function segmentDisplayName(segment) {
@@ -282,7 +302,33 @@ function segmentDisplayName(segment) {
 
 function openEvaluation(type) {
   if (!state.active) return;
-  if (type !== 'checkpoint') return;
+  if (type !== 'checkpoint' && type !== 'event_evaluation') return;
+
+  if (type === 'event_evaluation') {
+    if (
+      getEventInputMode() !== 'evaluation'
+      || !state.startedAt
+      || state.currentSegment === 'COMPLETE'
+    ) {
+      return;
+    }
+
+    const nowEpochMs = Date.now();
+    pendingEvaluation = {
+      type: 'event_evaluation',
+      triggerType: 'event_evaluation',
+      segmentId: state.currentSegment,
+      startedAt: formatLocalTimeWithMs(nowEpochMs),
+      startedEpochMs: nowEpochMs
+    };
+
+    els.evaluationTitle.textContent = '任意評価';
+    els.evaluationTriggerLabel.textContent = '任意評価';
+    prepareEvaluationForm();
+    els.evaluationModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    return;
+  }
 
   const checkpoint =
     config.checkpointSequence[state.checkpointIndex];
@@ -363,7 +409,7 @@ function cancelEvaluation() {
 async function recordDirectionalChange(triggerType) {
   if (
     !state.active ||
-    !state.eventInputEnabled ||
+    getEventInputMode() !== 'direction' ||
     !state.startedAt ||
     state.currentSegment === 'COMPLETE'
   ) {
@@ -441,10 +487,12 @@ async function submitEvaluation() {
       ...csvRecord
     });
 
-    state.lastEvaluation = {
-      thermal_sensation: csvRecord.thermal_sensation,
-      thermal_comfort: csvRecord.thermal_comfort
-    };
+    if (pendingEvaluation.type === 'checkpoint') {
+      state.lastEvaluation = {
+        thermal_sensation: csvRecord.thermal_sensation,
+        thermal_comfort: csvRecord.thermal_comfort
+      };
+    }
     state.subjectiveCount += 1;
 
     let measurementStarted = false;
@@ -494,6 +542,8 @@ async function submitEvaluation() {
     if (measurementStarted) {
       startElapsedTimer();
       showMessage('実験開始時の評価を保存しました．測定を開始します．');
+    } else if (csvRecord.trigger_type === 'event_evaluation') {
+      showMessage('任意評価を保存しました．');
     } else {
       showMessage('主観評価を保存しました．');
     }
@@ -831,6 +881,9 @@ async function restoreActiveSessionIfNeeded() {
   }
 
   state = session;
+  if (!state.eventInputMode) {
+    state.eventInputMode = state.eventInputEnabled === true ? 'direction' : 'disabled';
+  }
   state.startedEpochMs = state.startedEpochMs || parseLocalTimeWithMs(state.startedAt);
   state.endedEpochMs = state.endedEpochMs || parseLocalTimeWithMs(state.endedAt);
   const subjectiveRecords = await getRecordsBySession('subjective', state.sessionId);

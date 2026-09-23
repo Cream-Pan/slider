@@ -356,24 +356,9 @@ function openEvaluation(type) {
 }
 
 function prepareEvaluationForm() {
-  const previous = state.lastEvaluation;
-
-  if (previous) {
-    selectChoice(
-      els.sensationButtons,
-      previous.thermal_sensation,
-      false
-    );
-
-    selectChoice(
-      els.comfortButtons,
-      previous.thermal_comfort,
-      false
-    );
-  } else {
-    selectChoice(els.sensationButtons, null, false);
-    selectChoice(els.comfortButtons, null, false);
-  }
+  // 毎回の評価は前回の回答を引き継がず、未選択の状態から開始する。
+  selectChoice(els.sensationButtons, null, false);
+  selectChoice(els.comfortButtons, null, false);
 
   updateEvaluationState();
 }

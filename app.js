@@ -631,7 +631,7 @@ function showFinishView() {
 
   const durationText = formatElapsedDuration(getMeasurementDurationMs());
   els.finishSummary.textContent = `測定時間 ${durationText}，評価・イベント記録 ${state.subjectiveCount} 件，GPS ${state.gpsCount} 件を記録しました．`;
-  showMessage('最後の定期地点評価を保存し，測定を終了しました．CSV保存ボタンから2つのファイルを保存してください．');
+  showMessage('最後の定期地点評価を保存し，測定を終了しました．ZIP保存ボタンからデータを保存してください．');
 }
 
 async function downloadAllCsvFiles() {
@@ -668,12 +668,23 @@ async function downloadAllCsvFiles() {
     const subjectiveBlob = createCsvBlob(subjectiveColumns, subjectiveRecords);
     const gpsBlob = createCsvBlob(gpsColumns, gpsRecords);
 
-    triggerBlobDownload(`${state.sessionId}_subjective.csv`, subjectiveBlob);
-    window.setTimeout(() => {
-      triggerBlobDownload(`${state.sessionId}_gps.csv`, gpsBlob);
-    }, 150);
+    if (typeof JSZip === 'undefined') {
+      throw new Error('ZIP生成ライブラリを読み込めませんでした．');
+    }
 
-    showMessage('主観評価CSVとGPS CSVのダウンロードを開始しました．ブラウザから複数ファイルの許可を求められた場合は許可してください．');
+    const zip = new JSZip();
+    zip.file(`${state.sessionId}_subjective.csv`, subjectiveBlob);
+    zip.file(`${state.sessionId}_gps.csv`, gpsBlob);
+    const zipBlob = await zip.generateAsync({
+      type: 'blob',
+      mimeType: 'application/zip',
+      compression: 'DEFLATE',
+      compressionOptions: { level: 6 }
+    });
+
+    triggerBlobDownload(`${state.sessionId}.zip`, zipBlob);
+
+    showMessage('主観評価CSVとGPS CSVをZIPファイルにまとめて保存しました．');
   } catch (error) {
     console.error(error);
     showMessage('CSVを生成できませんでした．もう一度試してください．', 'error');

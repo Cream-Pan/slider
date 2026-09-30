@@ -325,8 +325,7 @@ function openEvaluation(type) {
     els.evaluationTitle.textContent = '任意評価';
     els.evaluationTriggerLabel.textContent = '任意評価';
     prepareEvaluationForm();
-    els.evaluationModal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
+    showEvaluationModal();
     return;
   }
 
@@ -351,7 +350,12 @@ function openEvaluation(type) {
 
   prepareEvaluationForm();
 
+  showEvaluationModal();
+}
+
+function showEvaluationModal() {
   els.evaluationModal.classList.remove('hidden');
+  els.evaluationModal.querySelector('.modal-card').scrollTop = 0;
   document.body.style.overflow = 'hidden';
 }
 

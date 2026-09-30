@@ -351,10 +351,23 @@ p {
   width: min(760px, 100%);
   max-height: calc(100vh - 1.5rem);
   overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   padding: clamp(1rem, 3vw, 1.5rem);
   border-radius: 10px;
   background: #fff;
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.28);
+}
+
+@supports (height: 100dvh) {
+  .modal {
+    inset: 0 0 auto;
+    height: 100dvh;
+  }
+
+  .modal-card {
+    max-height: calc(100dvh - 1.5rem);
+  }
 }
 
 .modal-header {
@@ -443,12 +456,10 @@ p {
 }
 
 .modal-actions {
-  position: sticky;
-  bottom: -1.5rem;
   display: grid;
   grid-template-columns: 1fr 2fr;
   gap: 0.75rem;
-  margin: 1rem -1.5rem -1.5rem;
+  margin: 1rem -1.5rem 0;
   padding: 1rem 1.5rem max(1rem, env(safe-area-inset-bottom));
   border-top: 1px solid #ddd;
   background: rgba(255, 255, 255, 0.97);
@@ -530,10 +541,11 @@ p {
 
   .modal-actions {
     margin-right: -1rem;
-    margin-bottom: -1rem;
+    margin-bottom: 0;
     margin-left: -1rem;
     padding-right: 1rem;
     padding-left: 1rem;
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom));
   }
 }
 

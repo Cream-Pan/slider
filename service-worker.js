@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_NAME = 'thermal-subjective-evaluation-v6-20260927';
+const CACHE_NAME = 'thermal-subjective-evaluation-v7-20261007';
 const APP_SHELL = [
   './',
   './index.html',

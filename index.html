@@ -27,6 +27,14 @@
       <h2 class="section-title">実験開始</h2>
 
       <div class="form-group">
+        <label for="experimentSelect">実験プロトコル</label>
+        <select id="experimentSelect" class="text-input"></select>
+        <p class="tiny-muted">
+          使用する評価手順を選択してください．
+        </p>
+      </div>
+
+      <div class="form-group">
         <label for="participantId">参加者ID</label>
         <input
           id="participantId"
@@ -209,13 +217,13 @@
               role="group"
               aria-label="温冷感">
 
-            <button type="button" class="choice-button" data-value="寒い">寒い</button>
-            <button type="button" class="choice-button" data-value="涼しい">涼しい</button>
-            <button type="button" class="choice-button" data-value="やや涼しい">やや涼しい</button>
-            <button type="button" class="choice-button" data-value="どちらでもない">どちらでもない</button>
-            <button type="button" class="choice-button" data-value="やや暖かい">やや暖かい</button>
-            <button type="button" class="choice-button" data-value="暖かい">暖かい</button>
-            <button type="button" class="choice-button" data-value="暑い">暑い</button>
+            <button type="button" class="choice-button" data-value="cold">寒い</button>
+            <button type="button" class="choice-button" data-value="cool">涼しい</button>
+            <button type="button" class="choice-button" data-value="slightly_cool">やや涼しい</button>
+            <button type="button" class="choice-button" data-value="neutral">どちらでもない</button>
+            <button type="button" class="choice-button" data-value="slightly_warm">やや暖かい</button>
+            <button type="button" class="choice-button" data-value="warm">暖かい</button>
+            <button type="button" class="choice-button" data-value="hot">暑い</button>
 
           </div>
         </section>
@@ -234,13 +242,13 @@
               role="group"
               aria-label="温熱的快不快">
 
-            <button type="button" class="choice-button" data-value="非常に快い">非常に快い</button>
-            <button type="button" class="choice-button" data-value="快い">快い</button>
-            <button type="button" class="choice-button" data-value="やや快い">やや快い</button>
-            <button type="button" class="choice-button" data-value="どちらでもない">どちらでもない</button>
-            <button type="button" class="choice-button" data-value="やや不快">やや不快</button>
-            <button type="button" class="choice-button" data-value="不快">不快</button>
-            <button type="button" class="choice-button" data-value="非常に不快">非常に不快</button>
+            <button type="button" class="choice-button" data-value="very_comfortable">非常に快い</button>
+            <button type="button" class="choice-button" data-value="comfortable">快い</button>
+            <button type="button" class="choice-button" data-value="slightly_comfortable">やや快い</button>
+            <button type="button" class="choice-button" data-value="neutral">どちらでもない</button>
+            <button type="button" class="choice-button" data-value="slightly_uncomfortable">やや不快</button>
+            <button type="button" class="choice-button" data-value="uncomfortable">不快</button>
+            <button type="button" class="choice-button" data-value="very_uncomfortable">非常に不快</button>
 
           </div>
         </section>

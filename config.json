@@ -1,6 +1,30 @@
 {
   "appName": "温熱環境主観評価",
-  "checkpointSequence": [
+  "defaultExperimentId": "experiment2",
+  "experiments": {
+    "trial": {
+      "label": "トライアル",
+      "checkpointSequence": [
+        {
+          "label": "実験開始・日向開始時",
+          "segmentId": "SUN_START",
+          "nextSegment": "SUN"
+        },
+        {
+          "label": "日陰開始時",
+          "segmentId": "SHADE_START",
+          "nextSegment": "SHADE"
+        },
+        {
+          "label": "実験終了時",
+          "segmentId": "END",
+          "nextSegment": "COMPLETE"
+        }
+      ]
+    },
+    "experiment2": {
+      "label": "実験2",
+      "checkpointSequence": [
     {
       "label": "実験開始・日向①開始時",
       "segmentId": "SUN1_START",
@@ -71,7 +95,44 @@
       "segmentId": "SUN2_10MIN_END",
       "nextSegment": "COMPLETE"
     }
-  ],
+      ]
+    },
+    "experiment3": {
+      "label": "実験3",
+      "checkpointSequence": [
+        {
+          "label": "実験開始・ポイント①開始時",
+          "segmentId": "POINT1_START",
+          "nextSegment": "POINT1"
+        },
+        {
+          "label": "ポイント①開始から5 min後",
+          "segmentId": "POINT1_5MIN",
+          "nextSegment": "POINT1"
+        },
+        {
+          "label": "ポイント①開始から10 min後",
+          "segmentId": "POINT1_10MIN",
+          "nextSegment": "POINT1_TO_POINT2"
+        },
+        {
+          "label": "ポイント②開始時",
+          "segmentId": "POINT2_START",
+          "nextSegment": "POINT2"
+        },
+        {
+          "label": "ポイント②開始から5 min後",
+          "segmentId": "POINT2_5MIN",
+          "nextSegment": "POINT2"
+        },
+        {
+          "label": "ポイント②開始から10 min後・実験終了時",
+          "segmentId": "POINT2_10MIN_END",
+          "nextSegment": "COMPLETE"
+        }
+      ]
+    }
+  },
   "gpsOptions": {
     "enableHighAccuracy": true,
     "maximumAge": 1000,

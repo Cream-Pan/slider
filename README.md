@@ -6,7 +6,7 @@
 
 定期地点評価では，温冷感と温熱的快・不快の2項目を記録する．イベント入力は「無」，「快・不快方向」，「定期評価と同じ項目」から選択できる．「快・不快方向」では参加者が「快適な方向に変化した」または「不快な方向に変化した」と感じた場合に専用ボタンを押し，「定期評価と同じ項目」では同じ2項目を好きなタイミングで回答する．
 
-GPS は「実験を開始する」を押した時点から取得を開始し，実験の時間計測は最初の「実験開始・日向①開始時」評価を Submit した時点から開始する．最後の「日向②開始から10 min後・実験終了時」評価を Submit すると測定を終了し，主観評価 CSV と GPS CSV を1つの ZIP ファイルにまとめて保存する．
+GPS は「実験を開始する」を押した時点から取得を開始し，実験の時間計測は選択した実験プロトコルの最初の定期地点評価を Submit した時点から開始する．最後の定期地点評価を Submit すると測定を終了し，主観評価 CSV と GPS CSV を1つの ZIP ファイルにまとめて保存する．
 
 ---
 
@@ -55,15 +55,15 @@ GPS は「実験を開始する」を押した時点から取得を開始し，�
   - 参加者が不快な方向への変化を感じた場合に「不快な方向に変化した」ボタンを押す．
   - ボタンを押した時刻を即時に記録し，追加の回答画面は表示しない．
 - **定期地点評価**
-  - 実験者が指定した14回のタイミングで回答する．
+  - 開始前に選択した実験プロトコルの定期地点で回答する．
   - 温冷感と温熱的快・不快の2項目を回答する．
 - **任意評価**
   - イベント入力で「定期評価と同じ項目」を選択した場合に利用できる．
   - 定期地点評価と同じ2項目を好きなタイミングで回答する．
 
-GPS は「実験を開始する」を押した時点から連続取得する．一方，画面上の実験経過時間は，最初の定期地点評価である「実験開始・日向①開始時」を Submit した時点を 0 s とする．
+GPS は「実験を開始する」を押した時点から連続取得する．一方，画面上の実験経過時間は，選択した実験プロトコルの最初の定期地点評価を Submit した時点を 0 s とする．
 
-最後の「日向②開始から10 min後・実験終了時」評価を Submit すると実験を終了し，CSV保存ボタンと新しい実験を開始するボタンを表示する．
+選択した実験プロトコルの最後の評価を Submit すると実験を終了し，CSV保存ボタンと新しい実験を開始するボタンを表示する．
 
 <p align="right">(<a href="#top">トップへ戻る</a>)</p>
 
@@ -89,7 +89,7 @@ GPS は「実験を開始する」を押した時点から連続取得する．�
 | `index.html` | 画面構成，定期地点評価・任意評価モーダル，方向変化ボタン，操作ボタンを定義する． |
 | `style.css` | 画面レイアウト，ボタン，評価UI，スマートフォン向け表示を定義する． |
 | `app.js` | 主観評価，方向変化イベント，GPS記録，時刻管理，IndexedDB保存，CSV生成を処理する． |
-| `config.json` | 14回の定期地点評価の順序，GPS取得条件，GPS精度閾値を管理する． |
+| `config.json` | 実験プロトコルごとの定期地点評価順序，既定プロトコル，GPS取得条件，GPS精度閾値を管理する． |
 | `manifest.json` | PWAとして使用する際のアプリ情報を定義する． |
 | `service-worker.js` | アプリの主要ファイルをキャッシュし，オフライン利用を補助する． |
 | `README.md` | 本アプリの仕様と使用方法を記載する． |
@@ -150,7 +150,7 @@ CSV生成には JavaScript の `Blob` を用いる．JSZipで2つの CSV を ZIP
 | 暖かい |
 | 暑い |
 
-CSVには選択した項目名を `thermal_sensation` として保存する．
+画面には日本語で表示し，CSVには `cold`，`cool`，`slightly_cool`，`neutral`，`slightly_warm`，`warm`，`hot` の英語コードを `thermal_sensation` として保存する．
 
 ### 2．温熱的快・不快
 
@@ -166,9 +166,9 @@ CSVには選択した項目名を `thermal_sensation` として保存する．
 | 不快 |
 | 非常に不快 |
 
-CSVには選択した項目名を `thermal_comfort` として保存する．
+画面には日本語で表示し，CSVには `very_comfortable`，`comfortable`，`slightly_comfortable`，`neutral`，`slightly_uncomfortable`，`uncomfortable`，`very_uncomfortable` の英語コードを `thermal_comfort` として保存する．
 
-最初の定期地点評価では両項目を未選択状態で表示し，2項目すべてを回答するまで「完了して保存」ボタンを有効化しない．2回目以降の定期地点評価では，直前の回答を初期選択として表示する．
+各評価では両項目を未選択状態で表示し，2項目すべてを回答するまで「完了して保存」ボタンを有効化しない．
 
 回答方向による誘導を避けるため，評価項目の選択状態には中立的なグレー系の配色を使用する．「快適な方向に変化した」と「不快な方向に変化した」の2ボタンについても，同一の中立色で表示する．
 
@@ -206,7 +206,7 @@ CSVには選択した項目名を `thermal_comfort` として保存する．
 
 ### 定期地点評価
 
-実験者が指定した14回のタイミングで回答する．
+開始前に選択した実験プロトコルの `checkpointSequence` に定義したタイミングで回答する．
 
 保存時には以下を記録する．
 
@@ -224,7 +224,7 @@ trigger_type = checkpoint
 
 ## 定期地点評価
 
-定期地点評価は以下の14回である．
+実験2の定期地点評価は以下の14回である．
 
 | 順序 | ボタン表示 | `segment_id` | 回答後の現在区間 |
 |---:|---|---|---|
@@ -243,26 +243,73 @@ trigger_type = checkpoint
 | 13 | 日向②開始から5 min後 | `SUN2_5MIN` | `SUN2` |
 | 14 | 日向②開始から10 min後・実験終了時 | `SUN2_10MIN_END` | `COMPLETE` |
 
-順序は `config.json` の `checkpointSequence` で管理する．現在の `app.js` では `checkpointSequence` が14件であることを確認してから実験設定を読み込む．
+順序は `config.json` の `experiments` に実験プロトコルごとに定義する．アプリは開始画面で選択されたプロトコルの `checkpointSequence` を使用し，件数ではなく各項目と終了条件を検証する．実験2以外に，トライアルと実験3の手順も登録する．セッションには選択した実験IDとその時点の手順を保存し，設定変更後に再開しても途中の手順が変わらないようにする．
 
-例：
+`experiments` に登録するプロトコルの例を示す．実際の `config.json` には既定値の実験2も含める．
 
 ```json
 {
-  "checkpointSequence": [
-    {
-      "label": "実験開始・日向①開始時",
-      "segmentId": "SUN1_START",
-      "nextSegment": "SUN1"
+  "experiments": {
+    "trial": {
+      "label": "トライアル",
+      "checkpointSequence": [
+        {
+          "label": "実験開始・日向開始時",
+          "segmentId": "SUN_START",
+          "nextSegment": "SUN"
+        },
+        {
+          "label": "日陰開始時",
+          "segmentId": "SHADE_START",
+          "nextSegment": "SHADE"
+        },
+        {
+          "label": "実験終了時",
+          "segmentId": "END",
+          "nextSegment": "COMPLETE"
+        }
+      ]
     },
-    {
-      "label": "日向①開始から5 min後",
-      "segmentId": "SUN1_5MIN",
-      "nextSegment": "SUN1"
+    "experiment3": {
+      "label": "実験3",
+      "checkpointSequence": [
+        {
+          "label": "実験開始・ポイント①開始時",
+          "segmentId": "POINT1_START",
+          "nextSegment": "POINT1"
+        },
+        {
+          "label": "ポイント①開始から5 min後",
+          "segmentId": "POINT1_5MIN",
+          "nextSegment": "POINT1"
+        },
+        {
+          "label": "ポイント①開始から10 min後",
+          "segmentId": "POINT1_10MIN",
+          "nextSegment": "POINT1_TO_POINT2"
+        },
+        {
+          "label": "ポイント②開始時",
+          "segmentId": "POINT2_START",
+          "nextSegment": "POINT2"
+        },
+        {
+          "label": "ポイント②開始から5 min後",
+          "segmentId": "POINT2_5MIN",
+          "nextSegment": "POINT2"
+        },
+        {
+          "label": "ポイント②開始から10 min後・実験終了時",
+          "segmentId": "POINT2_10MIN_END",
+          "nextSegment": "COMPLETE"
+        }
+      ]
     }
-  ]
+  }
 }
 ```
+
+実験プロトコルを追加する場合は，`experiments` に一意なID，画面表示名，2件以上の `checkpointSequence` を追加する．最後の項目の `nextSegment` は `COMPLETE` とし，それ以前には `COMPLETE` を設定しない．`segmentId` は各プロトコル内で一意にする．現在の設定では，実験2を既定値にし，開始前にトライアル，実験2，実験3を選択できる．
 
 <p align="right">(<a href="#top">トップへ戻る</a>)</p>
 
@@ -300,7 +347,7 @@ GPS精度 `accuracy` に応じて，画面上に以下の状態を表示する�
 | 20 m超，50 m以下 | 注意 |
 | 50 m超 | 精度低下 |
 
-GPS記録は最後の「日向②開始から10 min後・実験終了時」評価を Submit した時点で終了する．
+GPS記録は選択した実験プロトコルの最後の評価を Submit した時点で終了する．
 
 <p align="right">(<a href="#top">トップへ戻る</a>)</p>
 
@@ -324,7 +371,7 @@ GPS記録開始
         ↓
 各条件・各定期地点評価・選択したイベント入力
         ↓
-「定期地点評価：日向②開始から10 min後・実験終了時」をSubmit
+選択した実験プロトコルの最後の定期地点評価をSubmit
         ↓
 実験経過時間・GPS記録終了
 ```
@@ -423,7 +470,7 @@ A_CCW
 {sessionId}.zip
 ```
 
-ZIPを解凍すると，次の CSV が含まれる．CSVの列と内容は従来どおりである．
+ZIPを解凍すると，次の CSV が含まれる．Subjective CSVには実験プロトコルIDを追加し，評価回答は英語コードで保存する．
 
 ```text
 {sessionId}_subjective.csv
@@ -449,29 +496,31 @@ A_CW_20260907T130000_gps.csv
 
 | 列名 | 内容 |
 |---|---|
+| `experiment_id` | 選択した実験プロトコルID |
 | `trigger_type` | `checkpoint`，`comfortable_change`，`uncomfortable_change`，`event_evaluation` のいずれか |
 | `segment_id` | 定期地点ID，またはイベント発生時の現在区間 |
 | `evaluation_started_at` | 定期地点評価または任意評価を開いた時刻，または方向変化ボタンを押した時刻 |
 | `evaluation_submitted_at` | 定期地点評価または任意評価を保存した時刻，または方向変化ボタンを押した時刻 |
 | `response_duration_ms` | 定期地点評価・任意評価の回答時間 [ms]．方向変化イベントでは `0` |
-| `thermal_sensation` | 温冷感の項目名．方向変化イベントでは空欄 |
-| `thermal_comfort` | 温熱的快・不快の項目名．方向変化イベントでは空欄 |
+| `thermal_sensation` | 温冷感の英語コード．方向変化イベントでは空欄 |
+| `thermal_comfort` | 温熱的快・不快の英語コード．方向変化イベントでは空欄 |
 
 保存例：
 
 ```csv
-trigger_type,segment_id,evaluation_started_at,evaluation_submitted_at,response_duration_ms,thermal_sensation,thermal_comfort
-checkpoint,SUN1_START,2026/09/07 13:00:10.120,2026/09/07 13:00:15.422,5302,やや暖かい,快い
-uncomfortable_change,SUN1,2026/09/07 13:03:42.251,2026/09/07 13:03:42.251,0,,
-comfortable_change,SUN1,2026/09/07 13:07:18.904,2026/09/07 13:07:18.904,0,,
-checkpoint,SUN1_10MIN,2026/09/07 13:10:11.305,2026/09/07 13:10:15.710,4405,暖かい,やや不快
-event_evaluation,SUN1,2026/09/07 13:08:05.104,2026/09/07 13:08:10.812,5708,やや暖かい,快い
+experiment_id,trigger_type,segment_id,evaluation_started_at,evaluation_submitted_at,response_duration_ms,thermal_sensation,thermal_comfort
+experiment2,checkpoint,SUN1_START,2026/09/07 13:00:10.120,2026/09/07 13:00:15.422,5302,slightly_warm,comfortable
+experiment2,uncomfortable_change,SUN1,2026/09/07 13:03:42.251,2026/09/07 13:03:42.251,0,,
+experiment2,comfortable_change,SUN1,2026/09/07 13:07:18.904,2026/09/07 13:07:18.904,0,,
+experiment2,checkpoint,SUN1_10MIN,2026/09/07 13:10:11.305,2026/09/07 13:10:15.710,4405,warm,slightly_uncomfortable
+experiment2,event_evaluation,SUN1,2026/09/07 13:08:05.104,2026/09/07 13:08:10.812,5708,slightly_warm,comfortable
 ```
 
 ### GPS CSV
 
 | 列名 | 内容 |
 |---|---|
+| `experiment_id` | 選択した実験プロトコルID |
 | `timestamp` | GPS取得時刻 |
 | `latitude` | 緯度 [degree] |
 | `longitude` | 経度 [degree] |
@@ -595,13 +644,13 @@ A_CW
 
 ### 7．定期地点評価を記録する
 
-実験者の指示に従い，14回の各タイミングで定期地点評価を回答する．
+実験者の指示に従い，選択した実験プロトコルに定義した各タイミングで定期地点評価を回答する．
 
 定期地点評価を保存するたびに，ボタン表示は `config.json` の `checkpointSequence` に従って自動的に次の項目へ進む．
 
 ### 8．実験を終了する
 
-最後の「定期地点評価：日向②開始から10 min後・実験終了時」を回答して保存する．
+選択した実験プロトコルの最後の定期地点評価を回答して保存する．
 
 この時点で，実験経過時間とGPS記録を終了する．
 
@@ -631,13 +680,12 @@ ZIPを解凍すると，`*_subjective.csv` と `*_gps.csv` を取得できる．
 * 方向変化イベントはボタンを押した瞬間に保存するため，押下後に追加の確認画面は表示しない．
 * 方向変化イベントでは `thermal_sensation` と `thermal_comfort` を空欄として保存する．
 * 任意評価では定期地点評価と同じ2項目を回答し，`trigger_type=event_evaluation` として保存する．
-* 最初の定期地点評価では回答を未選択とし，2項目すべてを選択するまで保存できない．
-* 2回目以降の定期地点評価では，直前の回答を初期選択として表示する．
+* 各評価では回答を未選択とし，2項目すべてを選択するまで保存できない．
 * 回答方向による誘導を避けるため，評価項目および方向変化ボタンには中立的な配色を使用する．
 * 参加者IDはCSV内部には保存せず，ファイル名へ含める．
 * ZIP生成には JSZip を使用するため，保存時にインターネット接続が必要である．
 * CSVを保存する前でもデータは IndexedDB へ逐次保存するが，実験終了後は必ずCSVファイルを保存して確認する．
-* `config.json` の `checkpointSequence` は14件とし，実験プロトコルと一致させる．
+* `config.json` の `experiments` で使用する実験プロトコルを選択し，開始前の確認画面で表示名と評価回数を確認する．
 * `config.json` やアプリ本体を更新した場合はページを再読み込みする．Service Worker のキャッシュが残る場合は，キャッシュ名の更新またはサイトデータの再読み込みを行う．
 * 主観評価および方向変化イベントとGPSを対応付ける場合は，主観評価CSVの時刻列とGPSの `timestamp` を時刻基準として使用する．
 * GPSやWeatherを後処理でマッピングする場合は，最初の `SUN1_START` の `evaluation_started_at` から最後の `SUN2_10MIN_END` の `evaluation_submitted_at` までを対象期間として抽出する．

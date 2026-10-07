@@ -62,6 +62,9 @@ function createInitialState() {
   return {
     sessionId: null,
     participantId: '',
+    experimentId: null,
+    experimentLabel: '',
+    checkpointSequence: [],
     createdAt: null,
     startedAt: null,
     startedEpochMs: null,
@@ -80,7 +83,7 @@ function createInitialState() {
 
 function cacheElements() {
   const ids = [
-    'offlineBadge', 'messageArea', 'startView', 'participantId', 'startExperimentBtn',
+    'offlineBadge', 'messageArea', 'startView', 'participantId', 'experimentSelect', 'startExperimentBtn',
     'experimentView', 'activeParticipantId', 'elapsedTime', 'gpsStatus', 'currentSegment',
     'subjectiveCount', 'gpsCount', 'eventInputArea', 'comfortableChangeBtn', 'uncomfortableChangeBtn', 'eventEvaluationArea', 'eventEvaluationBtn', 'checkpointEvaluationBtn',
     'checkpointButtonLabel', 'finishView', 'finishSummary',
@@ -145,12 +148,59 @@ async function loadConfig() {
 
   const loaded = await response.json();
 
-  if (
-    !Array.isArray(loaded.checkpointSequence) ||
-    loaded.checkpointSequence.length !== 14
-  ) {
-    throw new Error('checkpointSequence は14件設定してください．');
+  const experimentEntries = Object.entries(loaded.experiments || {});
+  if (experimentEntries.length === 0) {
+    throw new Error('experiments に実験設定がありません．');
   }
+
+  if (!loaded.experiments[loaded.defaultExperimentId]) {
+    throw new Error('defaultExperimentId に対応する実験設定がありません．');
+  }
+
+  for (const [experimentId, experiment] of experimentEntries) {
+    const sequence = experiment?.checkpointSequence;
+    if (
+      typeof experiment?.label !== 'string'
+      || !experiment.label.trim()
+      || !Array.isArray(sequence)
+      || sequence.length < 2
+    ) {
+      throw new Error(`${experimentId} のlabelまたはcheckpointSequenceが不正です．`);
+    }
+
+    const segmentIds = new Set();
+    for (const checkpoint of sequence) {
+      if (
+        typeof checkpoint.label !== 'string'
+        || !checkpoint.label.trim()
+        || typeof checkpoint.segmentId !== 'string'
+        || !checkpoint.segmentId.trim()
+        || typeof checkpoint.nextSegment !== 'string'
+        || !checkpoint.nextSegment.trim()
+        || segmentIds.has(checkpoint.segmentId)
+      ) {
+        throw new Error(`${experimentId} のcheckpointSequenceに不正または重複した項目があります．`);
+      }
+      segmentIds.add(checkpoint.segmentId);
+    }
+
+    if (
+      sequence[sequence.length - 1].nextSegment !== 'COMPLETE'
+      || sequence.slice(0, -1).some(checkpoint => checkpoint.nextSegment === 'COMPLETE')
+    ) {
+      throw new Error(`${experimentId} は最後のnextSegmentだけをCOMPLETEにしてください．`);
+    }
+  }
+
+  els.experimentSelect.replaceChildren(
+    ...experimentEntries.map(([experimentId, experiment]) => {
+      const option = document.createElement('option');
+      option.value = experimentId;
+      option.textContent = experiment.label;
+      return option;
+    })
+  );
+  els.experimentSelect.value = loaded.defaultExperimentId;
 
   return {
     ...DEFAULT_CONFIG,
@@ -195,6 +245,13 @@ async function startExperiment() {
   }
 
   const eventInputMode = eventInputSetting.value;
+  const experimentId = els.experimentSelect.value;
+  const experiment = config.experiments[experimentId];
+  if (!experiment) {
+    showMessage('実験プロトコルを選択してください．', 'warning');
+    return;
+  }
+
   const eventInputText = {
     disabled: '無',
     direction: '快・不快方向',
@@ -203,6 +260,8 @@ async function startExperiment() {
 
   const confirmed = window.confirm(
     `参加者ID：${participantId}\n`
+    + `実験プロトコル：${experiment.label}\n`
+    + `定期評価：${experiment.checkpointSequence.length}回\n`
     + `イベント入力：${eventInputText}\n\n`
     + `この設定で実験を開始しますか．`
   );
@@ -215,6 +274,9 @@ async function startExperiment() {
     ...createInitialState(),
     sessionId: `${participantId}_${toCompactLocalTimestamp(now)}`,
     participantId,
+    experimentId,
+    experimentLabel: experiment.label,
+    checkpointSequence: experiment.checkpointSequence.map(checkpoint => ({ ...checkpoint })),
     eventInputMode,
     createdAt: formatLocalTimeWithMs(nowEpochMs),
     active: true
@@ -244,7 +306,7 @@ function renderExperimentState() {
   els.subjectiveCount.textContent = String(state.subjectiveCount || 0);
   els.gpsCount.textContent = String(state.gpsCount || 0);
 
-  const checkpoint = config.checkpointSequence[state.checkpointIndex];
+  const checkpoint = state.checkpointSequence[state.checkpointIndex];
   if (checkpoint) {
     els.checkpointButtonLabel.textContent = `定期地点評価：${checkpoint.label}`;
     els.checkpointEvaluationBtn.disabled = false;
@@ -287,14 +349,19 @@ function segmentDisplayName(segment) {
   const labels = {
     PRE_START: '開始前',
     SUN1: '日向①',
+    SUN: '日向',
     SUN1_TO_SHADE1: '日向①から日陰①への移動',
     SHADE1: '日陰①',
+    SHADE: '日陰',
     SHADE1_TO_BREAK: '室内休憩への移動',
     BREAK: '室内休憩',
     BREAK_TO_SHADE2: '室内休憩から日陰②への移動',
     SHADE2: '日陰②',
     SHADE2_TO_SUN2: '日陰②から日向②への移動',
     SUN2: '日向②',
+    POINT1: 'ポイント①',
+    POINT1_TO_POINT2: 'ポイント①からポイント②への移動',
+    POINT2: 'ポイント②',
     COMPLETE: '完了'
   };
   return labels[segment] || segment || '―';
@@ -330,7 +397,7 @@ function openEvaluation(type) {
   }
 
   const checkpoint =
-    config.checkpointSequence[state.checkpointIndex];
+    state.checkpointSequence[state.checkpointIndex];
 
   if (!checkpoint) return;
 
@@ -409,6 +476,7 @@ async function recordDirectionalChange(triggerType) {
   const timestamp = formatLocalTimeWithMs(nowEpochMs);
 
   const csvRecord = {
+    experiment_id: state.experimentId,
     trigger_type: triggerType,
     segment_id: state.currentSegment,
     evaluation_started_at: timestamp,
@@ -461,6 +529,7 @@ async function submitEvaluation() {
 
   const submittedEpochMs = Date.now();
   const csvRecord = {
+    experiment_id: state.experimentId,
     trigger_type: pendingEvaluation.triggerType,
     segment_id: pendingEvaluation.segmentId,
     evaluation_started_at: pendingEvaluation.startedAt,
@@ -488,7 +557,7 @@ async function submitEvaluation() {
     let measurementCompleted = false;
 
     if (pendingEvaluation.type === 'checkpoint') {
-      const checkpoint = config.checkpointSequence[state.checkpointIndex];
+      const checkpoint = state.checkpointSequence[state.checkpointIndex];
 
       if (!checkpoint) {
         throw new Error('定期地点評価の進行状態が不正です．');
@@ -503,7 +572,7 @@ async function submitEvaluation() {
       state.currentSegment = checkpoint.nextSegment;
       state.checkpointIndex += 1;
 
-      if (state.checkpointIndex >= config.checkpointSequence.length) {
+      if (state.checkpointIndex >= state.checkpointSequence.length) {
         state.active = false;
         state.completed = true;
         state.endedAt = csvRecord.evaluation_submitted_at;
@@ -566,6 +635,7 @@ async function handleGpsSuccess(position) {
   const coordinates = position.coords;
   const gpsRecord = {
     sessionId: state.sessionId,
+    experiment_id: state.experimentId,
     timestamp: formatLocalTimeWithMs(position.timestamp || Date.now()),
     latitude: coordinates.latitude,
     longitude: coordinates.longitude,
@@ -651,6 +721,7 @@ async function downloadAllCsvFiles() {
     gpsRecords.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
 
     const subjectiveColumns = [
+      'experiment_id',
       'trigger_type',
       'segment_id',
       'evaluation_started_at',
@@ -661,6 +732,7 @@ async function downloadAllCsvFiles() {
     ];
 
     const gpsColumns = [
+      'experiment_id',
       'timestamp',
       'latitude',
       'longitude',
@@ -703,11 +775,41 @@ function createCsvBlob(columns, records) {
   const lines = [columns.join(',')];
 
   for (const record of records) {
-    lines.push(columns.map(column => escapeCsv(record[column])).join(','));
+    lines.push(columns.map(column => {
+      let value = record[column];
+
+      if (column === 'experiment_id' && !value) {
+        value = state.experimentId;
+      } else if (column === 'thermal_sensation' || column === 'thermal_comfort') {
+        value = toEnglishResponseValue(value);
+      }
+
+      return escapeCsv(value);
+    }).join(','));
   }
 
   const content = `\uFEFF${lines.join('\r\n')}`;
   return new Blob([content], { type: 'text/csv;charset=utf-8' });
+}
+
+function toEnglishResponseValue(value) {
+  const legacyValues = {
+    寒い: 'cold',
+    涼しい: 'cool',
+    やや涼しい: 'slightly_cool',
+    どちらでもない: 'neutral',
+    やや暖かい: 'slightly_warm',
+    暖かい: 'warm',
+    暑い: 'hot',
+    非常に快い: 'very_comfortable',
+    快い: 'comfortable',
+    やや快い: 'slightly_comfortable',
+    やや不快: 'slightly_uncomfortable',
+    不快: 'uncomfortable',
+    非常に不快: 'very_uncomfortable'
+  };
+
+  return legacyValues[value] || value || '';
 }
 
 function triggerBlobDownload(filename, blob) {
@@ -881,6 +983,20 @@ async function restoreActiveSessionIfNeeded() {
   }
 
   state = session;
+  const restoredExperimentId = state.experimentId || config.defaultExperimentId;
+  const restoredExperiment =
+    config.experiments[restoredExperimentId]
+    || config.experiments[config.defaultExperimentId];
+  state.experimentId = config.experiments[restoredExperimentId]
+    ? restoredExperimentId
+    : config.defaultExperimentId;
+  state.experimentLabel = state.experimentLabel || restoredExperiment.label;
+  if (!Array.isArray(state.checkpointSequence) || state.checkpointSequence.length === 0) {
+    state.checkpointSequence = restoredExperiment.checkpointSequence.map(
+      checkpoint => ({ ...checkpoint })
+    );
+  }
+  els.experimentSelect.value = state.experimentId;
   if (!state.eventInputMode) {
     state.eventInputMode = state.eventInputEnabled === true ? 'direction' : 'disabled';
   }

@@ -26,72 +26,72 @@
       "label": "実験2",
       "checkpointSequence": [
     {
-      "label": "実験開始・日向①開始時",
+      "label": "実験開始・日向①開始時(0:00)",
       "segmentId": "SUN1_START",
       "nextSegment": "SUN1"
     },
     {
-      "label": "日向①開始から5 min後",
+      "label": "日向①開始から5 min後(5:00)",
       "segmentId": "SUN1_5MIN",
       "nextSegment": "SUN1"
     },
     {
-      "label": "日向①開始から10 min後",
+      "label": "日向①開始から10 min後(10:00)",
       "segmentId": "SUN1_10MIN",
       "nextSegment": "SUN1_TO_SHADE1"
     },
     {
-      "label": "日陰①開始時",
+      "label": "日陰①開始時(12:30)",
       "segmentId": "SHADE1_START",
       "nextSegment": "SHADE1"
     },
     {
-      "label": "日陰①開始から5 min後",
+      "label": "日陰①開始から5 min後(17:30)",
       "segmentId": "SHADE1_5MIN",
       "nextSegment": "SHADE1"
     },
     {
-      "label": "日陰①開始から10 min後",
+      "label": "日陰①開始から10 min後(22:30)",
       "segmentId": "SHADE1_10MIN",
       "nextSegment": "SHADE1_TO_BREAK"
     },
     {
-      "label": "室内休憩開始時",
+      "label": "室内休憩開始時(25:00)",
       "segmentId": "BREAK_START",
       "nextSegment": "BREAK"
     },
     {
-      "label": "室内休憩開始から10 min後",
+      "label": "室内休憩開始から10 min後(35:00)",
       "segmentId": "BREAK_10MIN",
       "nextSegment": "BREAK_TO_SHADE2"
     },
     {
-      "label": "日陰②開始時",
+      "label": "日陰②開始時(37:30)",
       "segmentId": "SHADE2_START",
       "nextSegment": "SHADE2"
     },
     {
-      "label": "日陰②開始から5 min後",
+      "label": "日陰②開始から5 min後(42:30)",
       "segmentId": "SHADE2_5MIN",
       "nextSegment": "SHADE2"
     },
     {
-      "label": "日陰②開始から10 min後",
+      "label": "日陰②開始から10 min後(47:30)",
       "segmentId": "SHADE2_10MIN",
       "nextSegment": "SHADE2_TO_SUN2"
     },
     {
-      "label": "日向②開始時",
+      "label": "日向②開始時(50:00)",
       "segmentId": "SUN2_START",
       "nextSegment": "SUN2"
     },
     {
-      "label": "日向②開始から5 min後",
+      "label": "日向②開始から5 min後(55:00)",
       "segmentId": "SUN2_5MIN",
       "nextSegment": "SUN2"
     },
     {
-      "label": "日向②開始から10 min後・実験終了時",
+      "label": "日向②開始から10 min後・実験終了時(60:00)",
       "segmentId": "SUN2_10MIN_END",
       "nextSegment": "COMPLETE"
     }
